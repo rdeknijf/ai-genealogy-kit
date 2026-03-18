@@ -1,0 +1,32 @@
+# Credentials
+.env
+
+# Personal data — GEDCOM files, photos, scans
+*.ged
+*.png
+*.jpg
+*.jpeg
+.tree-state
+
+# Personal research
+sources/
+research/*
+!research/DATA_SOURCES.md
+
+# Personal scripts (family-specific extraction)
+scripts/extract_*_line.py
+
+# Personal Claude config
+CLAUDE.local.md
+
+# Browser automation logs
+.playwright-mcp/
+.barebrowse/
+
+# Archives
+*.zip
+
+# Python
+__pycache__/
+*.pyc
+.venv/
