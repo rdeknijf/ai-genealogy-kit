@@ -5,25 +5,32 @@ description: |
   when you need to: (1) check matches for a person — Smart Matches against other
   trees or Record Matches against historical records, (2) search MyHeritage
   SuperSearch for historical records across 39B entries, (3) browse connected
-  family sites (Pronk 208K, Jansen-Pater 195K, Starke 4.6K, van den Ancker 8.9K),
-  (4) use photo tools (colorize, enhance, animate old photos). Triggers on:
-  "search myheritage", "check myheritage matches", "look up on myheritage",
-  "/myheritage", "what does myheritage have for [person]", or when you want a
-  secondary cross-reference for a person already found in official archives.
-  Requires login — credentials in .env. Read-only — do NOT edit the tree.
+  family sites, (4) use photo tools (colorize, enhance, animate old photos).
+  Triggers on: "search myheritage", "check myheritage matches", "look up on
+  myheritage", "/myheritage", "what does myheritage have for [person]", or when
+  you want a secondary cross-reference for a person already found in official
+  archives. Requires login — credentials in .env. Read-only — do NOT edit the tree.
 ---
 
 # MyHeritage — Matches, Records & Cross-Reference Research
 
-Search 39 billion records and browse 35,864 matches across the "Knijff and co."
-family site. MyHeritage is used **read-only** as a secondary research tool —
-Gramps Web is the source of truth.
+Search 39 billion records and browse matches on your MyHeritage family site.
+MyHeritage is used **read-only** as a secondary research tool — Gramps Web
+(or your local GEDCOM) is the source of truth.
 
 **Requires login** — credentials stored in `.env` as `MYHERITAGE_USER` and
 `MYHERITAGE_PASSWORD`.
 
-**Plan:** Basic (free) — tree capped at 2,506 people, some SuperSearch results
-require a Data subscription to view full details.
+## Setup
+
+Before using this skill, set these variables in your `.env`:
+
+```
+MYHERITAGE_SITE_ID=your-site-id-here
+```
+
+Find your Site ID by logging into MyHeritage and checking the URL on your
+family site page — it's the long alphanumeric string in the URL path.
 
 ## When to use MyHeritage vs other sources
 
@@ -34,19 +41,17 @@ require a Data subscription to view full details.
 | **FamilySearch** | International records, church records, scanned images |
 | **MyHeritage matches** | Want to cross-reference a person against other trees + record databases. Good for finding birth/death places, occupations, parents, siblings you haven't found elsewhere |
 | **MyHeritage SuperSearch** | 39B records including 19B newspapers, family trees from other platforms. Broader than Dutch-only sources |
-| **Connected sites** | Want to check large trees (Pronk 208K, Jansen-Pater 195K) for overlapping family lines |
+| **Connected sites** | Want to check large trees from other researchers for overlapping family lines |
 
 **Confidence:** MyHeritage data is **Tier C or D** — use it to guide archive
 lookups, not as authoritative evidence. Smart Matches are user-contributed trees
 (Tier D). Record Matches from indexed civil records are Tier C (cross-reference
 with the original archive for Tier B).
 
-## Site identifiers
+## Reading your Site ID
 
-- **Site name:** Knijff and co.
-- **Site ID:** `OYYV6FGPDP44KJIQLCMZCKCW4UADVZA`
-- **Trees:** De Knijf (1,781 persons) + Knijff Woerden - Hans Knijff (725 persons)
-- **Account ID:** 474101591
+At session start, read the `MYHERITAGE_SITE_ID` from `.env`. All MyHeritage
+URLs below use `{SITE_ID}` as a placeholder — substitute your actual value.
 
 ## Login workflow
 
@@ -61,7 +66,7 @@ Navigate to any MyHeritage page:
 browser_navigate → https://www.myheritage.com/research
 ```
 
-If the snapshot shows `button "Rutger de Knijf Rekeningopties"` in the header,
+If the snapshot shows a user name button with "Rekeningopties" in the header,
 you're logged in. Skip to the appropriate workflow below.
 
 If it shows `button "Log in"`, proceed to step 2.
@@ -95,24 +100,21 @@ Click the "Log in" button. A dialog appears with email and password fields:
 **Important:** Read credentials from `.env` using the Read tool — do NOT
 hardcode them.
 
-After login, a banner shows "De grens van de stamboom is overschreden" (tree
-limit exceeded). This is normal on the Basic plan — ignore it.
+After login, a banner may show "De grens van de stamboom is overschreden"
+(tree limit exceeded). This is normal on the Basic plan — ignore it.
 
 ### 4. Ensure correct site
 
-After login, check the header for `button "Knijff and co."`. If it shows a
-different site name, the session defaulted to another site. The site ID
-`OYYV6FGPDP44KJIQLCMZCKCW4UADVZA` is embedded in all URLs below and ensures
-the correct site is used.
+After login, check the header for your site name. If it shows a different
+site, the session defaulted to another one. The Site ID in the URLs below
+ensures the correct site is used.
 
 ## Workflow A: Browse matches for a person (Discovery Hub)
-
-This is the **primary use case** — 1,984 persons have 35,864 matches.
 
 ### 1. Navigate to Discovery Hub
 
 ```
-browser_navigate → https://www.myheritage.com/discovery-hub/OYYV6FGPDP44KJIQLCMZCKCW4UADVZA/matches-by-people
+browser_navigate → https://www.myheritage.com/discovery-hub/{SITE_ID}/matches-by-people
 ```
 
 This shows a paginated list of persons sorted by match value, with tabs:
@@ -133,7 +135,7 @@ Click the "Vind een persoon" (Find a person) button to search by name within
 the matches list. Alternatively, use the direct URL:
 
 ```
-browser_navigate → https://www.myheritage.com/discovery-hub/OYYV6FGPDP44KJIQLCMZCKCW4UADVZA/matches-for-person/{personId}
+browser_navigate → https://www.myheritage.com/discovery-hub/{SITE_ID}/matches-for-person/{personId}
 ```
 
 Person IDs can be found from the matches list (in the href of each person's link).
@@ -167,7 +169,7 @@ Search 39 billion records across all categories.
 ### 1. Navigate to SuperSearch
 
 ```
-browser_navigate → https://www.myheritage.com/research?s=OYYV6FGPDP44KJIQLCMZCKCW4UADVZA
+browser_navigate → https://www.myheritage.com/research?s={SITE_ID}
 ```
 
 ### 2. Fill the search form
@@ -215,30 +217,24 @@ Click a result to see details. On the free plan:
 
 ## Workflow C: Browse connected family sites
 
-Other researchers' trees where Rutger is a member:
-
-| Site | Manager | People | URL suffix |
-|------|---------|--------|------------|
-| Starke / ter Hoeve / Voorthuis / de Knijf | Piet Starke | 4,603 | OYYV6A7DJ4B2B746ZX32MKFSBJJ7GOA |
-| Pronk Web Site | Cornelis Pronk | 208,002 | OYYV6IEXJTVHERERZMKNKRWOM5JNLMY |
-| Website familie Jansen-Pater | Ina Jansen | 194,716 | OYYV64YLIO6J3HKW36YR3HRHXTIMNKY |
-| Familie van den Ancker | Ilse van den Ancker | 8,864 | OYYV6QLXTFNFSZNU6L4RGLRHJB32ZAY |
+After login, navigate to your family site settings to find connected sites.
+These are other researchers' trees where you've been added as a member.
+Each connected site has its own Site ID in the URL.
 
 To browse a connected site's tree:
 
 ```
-browser_navigate → https://www.myheritage.com/family-trees/{site-slug}/{SITE_ID}
+browser_navigate → https://www.myheritage.com/family-trees/{site-slug}/{CONNECTED_SITE_ID}
 ```
 
-These are PremiumPlus sites — more data may be visible through them than through
-the Basic plan.
+Connected sites with PremiumPlus plans may show more data than your own plan allows.
 
 ## Workflow D: Photo tools
 
 Navigate to the photo world:
 
 ```
-browser_navigate → https://www.myheritage.com/photo-world/OYYV6FGPDP44KJIQLCMZCKCW4UADVZA
+browser_navigate → https://www.myheritage.com/photo-world/{SITE_ID}
 ```
 
 Available tools (limited free uses per day):
@@ -299,13 +295,10 @@ Available tools (limited free uses per day):
 - **Cookie overlays:** Must be force-removed before any interaction — they block
   clicks even after "accepting" them. Always run the overlay removal code first.
 - **Tree limit banner:** "De grens van de stamboom is overschreden" appears on
-  every page. Ignore it — it doesn't block read operations.
-- **Site switching:** The account has multiple sites. Always use URLs with the
-  correct site ID (`OYYV6FGPDP44KJIQLCMZCKCW4UADVZA`) to ensure you're on
-  "Knijff and co."
+  every page on the Basic plan. Ignore it — it doesn't block read operations.
+- **Site switching:** If the account has multiple sites, always use URLs with the
+  correct Site ID from `.env` to ensure you're on the right site.
 - **Do NOT edit:** Do not confirm/reject matches, add people, or modify anything.
-  The tree is read-only. Gramps Web is the source of truth.
+  The tree is read-only. Your local GEDCOM / Gramps Web is the source of truth.
 - **Name prefixes:** Dutch name prefixes ("de", "van", "van de") may be handled
   differently. Try with and without prefix if results are sparse.
-- **Outdated tree:** The MyHeritage tree is outdated compared to Gramps Web.
-  Matches may reference data that has since been corrected locally.

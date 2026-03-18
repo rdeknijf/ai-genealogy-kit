@@ -1,11 +1,14 @@
 # Credentials
 .env
 
-# Personal data — GEDCOM files, photos, scans
+# Personal data — GEDCOM files, photos, scans, documents
 *.ged
 *.png
 *.jpg
 *.jpeg
+*.pdf
+*.tif
+*.tiff
 .tree-state
 
 # Personal research

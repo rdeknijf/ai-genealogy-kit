@@ -75,8 +75,7 @@ Pattern: take the filename after the `?` in the frameset URL.
 The largest section. Descends from Aert Knijff (~1545) through 8+
 generations. Covers the Woerden tile baker families and all branches
 including the Delft "van der Knijff" and Alphen "de Knijf" offshoots.
-The GEDCOM file (`82bc8a_3290618r6ca81y085d3d25_C.ged`, 689 individuals)
-is the 2013 data export of this same tree.
+A GEDCOM export of this tree is available for download on the site.
 
 ### Knijff Harmelen (separate family)
 
@@ -102,4 +101,4 @@ regional archive (W054 series).
 Jan Pieterse Knijff (b. Utrecht 16 Sep 1742, d. Koudekerk Dec 1806) is
 the branching point. When he moved to Alphen aan den Rijn, civil registry
 officials changed the name to "de Knijf" (added prefix, dropped second f).
-See `research/knijff-name-variants.md` for full analysis.
+See the "Naamsverschrijvingen" page on the site for the full analysis.

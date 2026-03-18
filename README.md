@@ -49,8 +49,8 @@ cp /path/to/your/tree.ged tree.ged
 echo "local" > .tree-state
 
 # (Optional) Create personal config for Claude
-cp CLAUDE.local.example.md CLAUDE.local.md  # if example exists
-# Or just create CLAUDE.local.md with your personal notes
+cp CLAUDE.local.example.md CLAUDE.local.md
+# Edit CLAUDE.local.md with your Gramps Web URL, MyHeritage details, etc.
 
 # Start researching
 claude
