@@ -12,7 +12,7 @@ def parse_gedcom(filepath: str) -> dict:
     current_id = None
     current_record = []
 
-    with open(filepath, encoding="utf-8") as f:
+    with open(filepath, encoding="utf-8", errors="replace") as f:
         for line in f:
             line = line.rstrip("\n")
             if line.startswith("0 "):
@@ -230,12 +230,16 @@ def find_end_of_line_ancestors(start_id: str, individuals: dict, families: dict)
 
 
 def main():
-    ged_files = list(Path(".").glob("*.ged"))
-    if not ged_files:
-        print("No .ged files found")
-        sys.exit(1)
-
-    filepath = ged_files[0]
+    if len(sys.argv) > 1:
+        filepath = Path(sys.argv[1])
+    elif Path("tree.ged").exists():
+        filepath = Path("tree.ged")
+    else:
+        ged_files = list(Path(".").glob("*.ged"))
+        if not ged_files:
+            print("No .ged files found. Pass a path or place tree.ged in the project root.")
+            sys.exit(1)
+        filepath = ged_files[0]
     print(f"Parsing {filepath.name}...")
     records = parse_gedcom(str(filepath))
     individuals = get_individuals(records)

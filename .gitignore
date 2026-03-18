@@ -21,6 +21,7 @@ scripts/extract_*_line.py
 
 # Personal Claude config
 CLAUDE.local.md
+.claude/settings.local.json
 
 # Browser automation logs
 .playwright-mcp/
