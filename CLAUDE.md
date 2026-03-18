@@ -53,6 +53,19 @@ Project-local skills exist for each source — see `.claude/skills/`.
 - Track all findings in `private/research/FINDINGS.md` with tier and status
 - Keep notes on unresolved questions and research leads
 
+### Fan Chart — Research Verification Status
+
+Generate a visual fan chart showing ancestors colorized by verification tier:
+
+```bash
+python scripts/fan_chart.py [GENERATIONS]    # default: 7
+```
+
+Outputs `private/fan_chart.svg`. Colors: green (Tier A), blue (Tier B),
+amber (Tier C), red (Tier D), gray (unresearched), light gray (unknown).
+Tiers are derived from GEDCOM source citations, with FINDINGS.md overrides.
+See `/fan-chart` skill for details.
+
 ## Research Workflow — Harden First, Then Extend
 
 **Default approach:** When working on any family line, harden (verify)
@@ -113,5 +126,5 @@ session**, so only one agent can use Playwright at a time. Options:
   - `sources/` — scanned documents, certificates, evidence
   - `media/` — photos and scans
 - `research/DATA_SOURCES.md` — catalog of Dutch genealogy archives
-- `scripts/` — Python tools for parsing and analyzing GEDCOM data
+- `scripts/` — Python tools for GEDCOM analysis (`analyze_gedcom.py`) and visualization (`fan_chart.py`)
 - `.claude/skills/` — data source and research workflow skills
