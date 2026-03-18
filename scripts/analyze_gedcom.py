@@ -1,5 +1,6 @@
 """Quick analysis of the GEDCOM export — overview stats, surname distribution, earliest ancestors, gaps."""
 
+import os
 import re
 import sys
 from collections import Counter, defaultdict
@@ -278,8 +279,8 @@ def main():
     for place, count in places.most_common(20):
         print(f"  {count:4d}  {place}")
 
-    # Find root individual (typically I1 in most GEDCOM exports)
-    root_id = "I1"
+    # Find root individual — set GEDCOM_ROOT_ID in .env, or pass as 2nd arg
+    root_id = sys.argv[2] if len(sys.argv) > 2 else os.environ.get("GEDCOM_ROOT_ID", "I1")
     if root_id in individuals:
         print(f"\n{'='*60}")
         print(f"DIRECT ANCESTORS OF {individuals[root_id]['name']}")
