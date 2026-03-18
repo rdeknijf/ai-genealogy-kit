@@ -50,7 +50,7 @@ After a DB clear + reimport, the path in the new DB points to the wrong location
 ### Step 1: Fix GEDCOM paths (make them relative)
 
 ```bash
-sed -i 's|1 FILE /root/gramps/|1 FILE |' tree.ged
+sed -i 's|1 FILE /root/gramps/|1 FILE |' private/tree.ged
 ```
 
 This changes `1 FILE /root/gramps/xxx.jpg` → `1 FILE xxx.jpg`.

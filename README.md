@@ -42,11 +42,15 @@ cd genealogy
 cp .env.example .env
 # Edit .env with your Gramps Web and/or MyHeritage credentials
 
+# Set up your private data directory
+mkdir -p private/research private/sources private/media
+cd private && git init && git lfs install && git lfs track "*.png" "*.jpg" "*.jpeg" "*.pdf" "*.tif" "*.tiff" "*.zip" "*.docx" && cd ..
+
 # Place your GEDCOM
-cp /path/to/your/tree.ged tree.ged
+cp /path/to/your/tree.ged private/tree.ged
 
 # Set sync state
-echo "local" > .tree-state
+echo "local" > private/.tree-state
 
 # (Optional) Create personal config for Claude
 cp CLAUDE.local.example.md CLAUDE.local.md
@@ -89,7 +93,7 @@ Then try:
 1. **You ask Claude to research a family line** — e.g., "harden the Van den Hul line"
 2. **Claude parses your GEDCOM** to extract everyone in that line
 3. **Claude searches archives** using the skills, one person at a time
-4. **Findings go to `research/FINDINGS.md`** with confidence tiers
+4. **Findings go to `private/research/FINDINGS.md`** with confidence tiers
 5. **Only Tier A/B evidence** gets applied to the GEDCOM (with your approval)
 
 The confidence tier system prevents Claude from polluting your tree with
@@ -101,10 +105,14 @@ unverified data. AI inference is always Tier D — noted but never applied.
 ├── .claude/skills/        # Archive lookup + workflow skills
 ├── scripts/               # GEDCOM analysis and Gramps Web sync
 ├── research/
-│   ├── DATA_SOURCES.md    # 40+ Dutch archive catalog
-│   └── FINDINGS.md        # Your research findings (gitignored)
-├── sources/               # Scanned documents (gitignored)
-├── tree.ged               # Your GEDCOM (gitignored)
+│   └── DATA_SOURCES.md    # 40+ Dutch archive catalog
+├── private/               # Your personal data (own git repo, gitignored)
+│   ├── tree.ged           # Your GEDCOM
+│   ├── research/
+│   │   └── FINDINGS.md    # Your research findings
+│   ├── sources/           # Scanned documents
+│   ├── media/             # Photos and scans (Git LFS)
+│   └── .tree-state        # Sync state file
 ├── CLAUDE.md              # Project instructions for Claude Code
 ├── CLAUDE.local.md        # Your personal config (gitignored)
 ├── .env                   # Credentials (gitignored)

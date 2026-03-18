@@ -58,7 +58,7 @@ Wait ~5 seconds, then import via the API as normal:
 curl -X POST "$GRAMPSWEB_URL/api/importers/ged/file" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/octet-stream" \
-  --data-binary "@tree.ged"
+  --data-binary "@private/tree.ged"
 ```
 
 The import returns a task ID — poll `/api/tasks/$TASK_ID` until `state` is `SUCCESS`.
