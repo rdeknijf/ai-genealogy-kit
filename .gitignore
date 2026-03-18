@@ -4,8 +4,15 @@ private/
 # Credentials
 .env
 
-# Personal scripts (family-specific extraction)
+# Personal scripts (family-specific extraction, Gramps Web sync)
 scripts/extract_*_line.py
+scripts/sync-grampsweb.sh
+scripts/export-grampsweb.sh
+scripts/fix-media-paths-api.py
+scripts/download-media.sh
+
+# Personal skills (Gramps Web troubleshooting)
+.claude/skills/grampsweb-*/
 
 # Personal Claude config
 CLAUDE.local.md

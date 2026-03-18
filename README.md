@@ -1,4 +1,4 @@
-# Genealogy Research Kit
+# AI Genealogy Kit
 
 AI-assisted genealogy research using [Claude Code](https://claude.ai/claude-code).
 Built for Dutch genealogy but the methodology applies to any region.
@@ -14,9 +14,6 @@ Built for Dutch genealogy but the methodology applies to any region.
   confidence tiers (A-D) that prevents bad data from entering your tree. Claude
   verifies every person against official records before extending further back.
 
-- **Gramps Web sync** — Scripts to push/pull your GEDCOM to a self-hosted
-  [Gramps Web](https://gramps-project.org/web/) instance for sharing with family.
-
 - **40+ data source catalog** — Comprehensive reference of Dutch genealogy archives,
   what they contain, and how to access them (`research/DATA_SOURCES.md`).
 
@@ -29,18 +26,17 @@ Built for Dutch genealogy but the methodology applies to any region.
 - [Playwright MCP server](https://github.com/anthropics/claude-code/tree/main/packages/playwright-mcp)
   configured in your Claude Code settings
 - Python 3.12+ and [uv](https://docs.astral.sh/uv/) for running analysis scripts
-- (Optional) A [Gramps Web](https://gramps-project.org/web/) instance for publishing
 
 ## Getting started
 
 ```bash
 # Clone
-git clone https://github.com/rdeknijf/genealogy.git
-cd genealogy
+git clone https://github.com/rdeknijf/ai-genealogy-kit.git
+cd ai-genealogy-kit
 
 # Configure credentials
 cp .env.example .env
-# Edit .env with your Gramps Web and/or MyHeritage credentials
+# Edit .env with your MyHeritage credentials (optional)
 
 # Set up your private data directory
 mkdir -p private/research private/sources private/media
@@ -54,7 +50,7 @@ echo "local" > private/.tree-state
 
 # (Optional) Create personal config for Claude
 cp CLAUDE.local.example.md CLAUDE.local.md
-# Edit CLAUDE.local.md with your Gramps Web URL, MyHeritage details, etc.
+# Edit CLAUDE.local.md with your personal details
 
 # Start researching
 claude
@@ -103,7 +99,7 @@ unverified data. AI inference is always Tier D — noted but never applied.
 
 ```
 ├── .claude/skills/        # Archive lookup + workflow skills
-├── scripts/               # GEDCOM analysis and Gramps Web sync
+├── scripts/               # GEDCOM analysis tools
 ├── research/
 │   └── DATA_SOURCES.md    # 40+ Dutch archive catalog
 ├── private/               # Your personal data (own git repo, gitignored)
@@ -112,7 +108,6 @@ unverified data. AI inference is always Tier D — noted but never applied.
 │   │   └── FINDINGS.md    # Your research findings
 │   ├── sources/           # Scanned documents
 │   ├── media/             # Photos and scans (Git LFS)
-│   └── .tree-state        # Sync state file
 ├── CLAUDE.md              # Project instructions for Claude Code
 ├── CLAUDE.local.md        # Your personal config (gitignored)
 ├── .env                   # Credentials (gitignored)
