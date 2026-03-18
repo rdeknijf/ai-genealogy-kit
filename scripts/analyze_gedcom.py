@@ -233,12 +233,12 @@ def find_end_of_line_ancestors(start_id: str, individuals: dict, families: dict)
 def main():
     if len(sys.argv) > 1:
         filepath = Path(sys.argv[1])
-    elif Path("tree.ged").exists():
-        filepath = Path("tree.ged")
+    elif Path("private/tree.ged").exists():
+        filepath = Path("private/tree.ged")
     else:
-        ged_files = list(Path(".").glob("*.ged"))
+        ged_files = list(Path("private").glob("*.ged")) or list(Path(".").glob("*.ged"))
         if not ged_files:
-            print("No .ged files found. Pass a path or place tree.ged in the project root.")
+            print("No .ged files found. Pass a path or place tree.ged in private/.")
             sys.exit(1)
         filepath = ged_files[0]
     print(f"Parsing {filepath.name}...")

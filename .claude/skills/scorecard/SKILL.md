@@ -42,7 +42,7 @@ Optional arguments for custom paths:
 uv run .claude/skills/scorecard/scripts/scorecard.py [baseline.ged] [current.ged]
 ```
 
-Defaults to `original_myheritage_baseline.ged` and `tree.ged` in the project root.
+Defaults to `private/original_myheritage_baseline.ged` and `private/tree.ged`.
 
 ## How It Works
 

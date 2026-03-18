@@ -91,8 +91,8 @@ def count_type(records, rtype):
 
 def main():
     project = Path(__file__).resolve().parent.parent.parent.parent.parent
-    baseline_path = sys.argv[1] if len(sys.argv) > 1 else str(project / "original_myheritage_baseline.ged")
-    current_path = sys.argv[2] if len(sys.argv) > 2 else str(project / "tree.ged")
+    baseline_path = sys.argv[1] if len(sys.argv) > 1 else str(project / "private" / "original_myheritage_baseline.ged")
+    current_path = sys.argv[2] if len(sys.argv) > 2 else str(project / "private" / "tree.ged")
 
     orig, orig_uid = parse_ged(baseline_path)
     curr, curr_uid = parse_ged(current_path)

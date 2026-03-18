@@ -11,7 +11,7 @@ if [[ -f "$PROJECT_DIR/.env" ]]; then
 fi
 
 GRAMPSWEB_URL="${GRAMPSWEB_URL:?Set GRAMPSWEB_URL in .env (e.g. https://genealogy.example.com)}"
-OUTPUT="${1:-$PROJECT_DIR/tree.ged}"
+OUTPUT="${1:-$PROJECT_DIR/private/tree.ged}"
 
 # Credentials
 GRAMPSWEB_USER="${GRAMPSWEB_USER:-}"

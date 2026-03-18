@@ -71,7 +71,7 @@ if that record confirms their existence and a family connection.
 
 ### 1. Extract the line
 
-Parse `tree.ged` to get every person in the line with current data.
+Parse `private/tree.ged` to get every person in the line with current data.
 Use a Python script to extract: name, birth, death, marriage, parents,
 spouse, children, and existing source citations.
 
@@ -91,7 +91,7 @@ a. **Search official archives** — determine the right sources based on
    is from a region or country with no skill, use `/onboard-datasource`
    to create one first.
 b. **Cross-validate** — check internal consistency across records
-c. **Document** — write findings to `research/FINDINGS.md` with tier and
+c. **Document** — write findings to `research/private/research/FINDINGS.md` with tier and
    source reference
 d. **Flag discrepancies** — if a record contradicts the GEDCOM, flag it
    clearly for user review
@@ -99,7 +99,7 @@ d. **Flag discrepancies** — if a record contradicts the GEDCOM, flag it
 ### 4. Apply verified data
 
 - Tier A/B findings → edit GEDCOM with source citation (after user review)
-- Tier C findings → flag in FINDINGS.md
+- Tier C findings → flag in private/research/FINDINGS.md
 - Discrepancies → discuss with user before any edit
 
 ### 5. Report the hardening status
@@ -126,7 +126,7 @@ A person can be HARD without a marriage record.
 
 Each person's verification is independent. Use sub-agents where possible,
 but respect the Playwright concurrency constraint (one browser session).
-Non-browser work (GEDCOM parsing, cross-validation, FINDINGS.md writing)
+Non-browser work (GEDCOM parsing, cross-validation, private/research/FINDINGS.md writing)
 can run in parallel with browser lookups.
 
 ## After hardening

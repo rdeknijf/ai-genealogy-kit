@@ -18,7 +18,7 @@ GRAMPSWEB_URL="${GRAMPSWEB_URL:?Set GRAMPSWEB_URL in .env (e.g. https://genealog
 GRAMPSWEB_HOST="${GRAMPSWEB_HOST:?Set GRAMPSWEB_HOST in .env (SSH hostname of your Gramps Web server)}"
 GRAMPSWEB_COMPOSE_DIR="${GRAMPSWEB_COMPOSE_DIR:?Set GRAMPSWEB_COMPOSE_DIR in .env (path to docker-compose.yml on server)}"
 GRAMPSWEB_DB_ID="${GRAMPSWEB_DB_ID:?Set GRAMPSWEB_DB_ID in .env (Gramps Web database UUID)}"
-GEDCOM="${1:-$(ls -t "$( cd "$(dirname "$0")/.." && pwd )"/*.ged 2>/dev/null | head -1)}"
+GEDCOM="${1:-$(ls -t "$PROJECT_DIR/private/"*.ged 2>/dev/null | head -1)}"
 
 if [[ -z "$GEDCOM" || ! -f "$GEDCOM" ]]; then
   echo "Error: No GEDCOM file found. Pass path as argument or place .ged file in project root." >&2

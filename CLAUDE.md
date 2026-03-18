@@ -18,9 +18,11 @@ from the example if needed.
 
 ## GEDCOM
 
-The local `tree.ged` is the working copy for AI research and analysis.
+The local `private/tree.ged` is the working copy for AI research and analysis.
+All personal data lives in `private/` — it has its own git repo with LFS
+for binary files (images, scans, PDFs). See `private/README.md`.
 
-### State file: `.tree-state`
+### State file: `private/.tree-state`
 
 A single-line file that controls sync behavior:
 
@@ -28,19 +30,19 @@ A single-line file that controls sync behavior:
 - **`remote`** — remote Gramps Web has newer data. Sync before reading/editing:
   run `scripts/export-grampsweb.sh`, compare, then set state back to `local`.
 
-**At session start, read `.tree-state`.** If it says `local`, skip the
-sync — just use `tree.ged` as-is.
+**At session start, read `private/.tree-state`.** If it says `local`, skip the
+sync — just use `private/tree.ged` as-is.
 
 ## Data Integrity — CRITICAL
 
 NEVER edit the GEDCOM file based on AI inference or unverified secondary sources.
-All changes must follow the confidence tier system documented in `research/FINDINGS.md`.
+All changes must follow the confidence tier system documented in `private/research/FINDINGS.md`.
 
 | Tier | Source | Action |
 |------|--------|--------|
 | **A** | Primary source (civil record scan, church book) user has seen | Edit GEDCOM directly |
 | **B** | Indexed civil record from official archive with reference | Edit with source citation |
-| **C** | Multiple independent secondary sources agree | Flag in FINDINGS.md for review |
+| **C** | Multiple independent secondary sources agree | Flag in private/research/FINDINGS.md for review |
 | **D** | Single secondary source or AI inference | Note only, never edit |
 
 When in doubt, **flag it, don't fix it**. Wrong data in a family tree is worse than missing data.
@@ -91,7 +93,7 @@ via `.env` — see `.env.example` for required variables.
 - Parse and analyze GEDCOM files programmatically (Python with `uv`)
 - Use web search to find indexed records, then verify with primary sources
 - Cross-reference multiple independent sources before flagging changes
-- Track all findings in `research/FINDINGS.md` with tier and status
+- Track all findings in `private/research/FINDINGS.md` with tier and status
 - Keep notes on unresolved questions and research leads
 
 ## Research Workflow — Harden First, Then Extend
@@ -110,12 +112,12 @@ When systematically verifying a line (patrilineal, matrilineal, or any
 branch), follow this workflow:
 
 1. **Sync** — always sync GEDCOM first (see above)
-2. **Extract the line** — parse `tree.ged` to get all persons in the
+2. **Extract the line** — parse `private/tree.ged` to get all persons in the
    line with their current GEDCOM data
 3. **Verify each person** — for every person, look up birth, marriage,
    and death records in official archives. Cross-validate ages across
    records (age at marriage + marriage year = birth year, etc.)
-4. **Document** — write findings to `research/FINDINGS.md` with tier
+4. **Document** — write findings to `private/research/FINDINGS.md` with tier
 5. **Apply** — edit GEDCOM only for Tier A/B evidence
 
 ### Sub-agents for parallel verification
@@ -149,9 +151,12 @@ session**, so only one agent can use Playwright at a time. Options:
 
 ## File Organization
 
-- `*.ged` — GEDCOM files (gitignored, your personal data)
-- `research/FINDINGS.md` — your research findings (gitignored)
+- `private/` — personal data (own git repo with LFS, gitignored by public repo)
+  - `*.ged` — GEDCOM files
+  - `research/FINDINGS.md` — research findings
+  - `sources/` — scanned documents, certificates, evidence
+  - `media/` — photos and scans
+  - `.tree-state` — sync state file
 - `research/DATA_SOURCES.md` — catalog of Dutch genealogy archives
-- `sources/` — scanned documents, certificates, evidence (gitignored)
 - `scripts/` — sync scripts and Python tools for parsing and analyzing data
 - `.claude/skills/` — data source and research workflow skills

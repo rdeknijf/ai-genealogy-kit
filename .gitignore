@@ -1,20 +1,8 @@
+# Private data repo (personal git + LFS, has its own .git)
+private/
+
 # Credentials
 .env
-
-# Personal data — GEDCOM files, photos, scans, documents
-*.ged
-*.png
-*.jpg
-*.jpeg
-*.pdf
-*.tif
-*.tiff
-.tree-state
-
-# Personal research
-sources/
-research/*
-!research/DATA_SOURCES.md
 
 # Personal scripts (family-specific extraction)
 scripts/extract_*_line.py
