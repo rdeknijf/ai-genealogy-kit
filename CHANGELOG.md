@@ -1,3 +1,9 @@
+## v0.8.0 (2026-03-19)
+
+### Feat
+
+- **hooks**: add file locking documentation to CLAUDE.md
+
 ## v0.7.0 (2026-03-19)
 
 ### Feat
