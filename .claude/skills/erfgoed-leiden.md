@@ -1,27 +1,30 @@
 ---
-name: erfgoed-leiden
+name: erfgoed-leiden-optimized
 description: |
   Search indexed person records and scanned documents at Erfgoed Leiden en
-  Omstreken (erfgoedleiden.nl) via Playwright browser automation. Covers the
-  Leiden region of South Holland province including: Hillegom, Katwijk, Kaag en
-  Braassem, Leiden, Leiderdorp, Lisse, Nieuwkoop, Noordwijk, Oegstgeest,
-  Teylingen, Zoeterwoude. Also has records for Ter Aar, Zevenhoven, Nieuwveen,
-  Woubrugge, Sassenheim, Rijnsburg, Leimuiden, Hoogmade, Alkemade, and
-  Achttienhoven. Does NOT cover Alphen aan den Rijn. 398+ Knijf person records
-  found here, mainly in Ter Aar (179) and Nieuwkoop (67). Record types include
-  DTB (Dopen/Trouwen/Begraven), BS (Geboorte/Huwelijk/Overlijden),
-  Bevolkingsregister, Notariële akten, and more. Triggers on: "search Erfgoed
+  Omstreken (erfgoedleiden.nl) via direct Memorix Genealogy REST API calls.
+  No browser automation needed — returns structured JSON in ~50ms per query.
+  Covers the Leiden region of South Holland province including: Hillegom,
+  Katwijk, Kaag en Braassem, Leiden, Leiderdorp, Lisse, Nieuwkoop, Noordwijk,
+  Oegstgeest, Teylingen, Zoeterwoude. Also has records for Ter Aar, Zevenhoven,
+  Nieuwveen, Woubrugge, Sassenheim, Rijnsburg, Leimuiden, Hoogmade, Alkemade,
+  and Achttienhoven. Does NOT cover Alphen aan den Rijn. 398+ Knijf person
+  records found here, mainly in Ter Aar (179) and Nieuwkoop (67). Record types
+  include DTB (Dopen/Trouwen/Begraven), BS (Geboorte/Huwelijk/Overlijden),
+  Bevolkingsregister, Notariele akten, and more. Triggers on: "search Erfgoed
   Leiden", "look up in Leiden archive", "check Leiden records", "Ter Aar
-  records", "Nieuwkoop records", "/erfgoed-leiden", or any genealogy research in
-  the Leiden/South Holland region. No login required.
+  records", "Nieuwkoop records", "/erfgoed-leiden", or any genealogy research
+  in the Leiden/South Holland region. No login required. Parallelizable — run
+  multiple queries simultaneously.
 ---
 
 # Erfgoed Leiden en Omstreken — Leiden Region Archive
 
 Search indexed person records and scanned documents from Erfgoed Leiden en
-Omstreken. Covers the Leiden region of South Holland province.
+Omstreken via the Memorix Genealogy REST API. Returns structured JSON directly
+— no browser automation needed.
 
-No login required for viewing indexed records and scanned documents.
+No login required. No authentication beyond the public API key.
 
 ## Coverage
 
@@ -33,176 +36,222 @@ Achttienhoven (1), Alkemade (1), Hoogmade (1), Voorhout (1).
 **NOT covered:** Alphen aan den Rijn (separate archive), Woerden (Het Utrechts
 Archief / RHC Rijnstreek), Gouda (Streekarchief Midden-Holland).
 
+## API details
+
+- **Base URL:** `https://webservices.memorix.nl/genealogy/`
+- **API key:** `3288aeb2-c2a5-40b4-941b-f9beb2089511` (public, embedded in page)
+- **Platform:** Memorix Genealogy by Picturae (AngularJS frontend, REST+Solr backend)
+- **Response format:** JSON
+- **Response time:** ~30-50ms per query
+- **Max rows per page:** 500 (tested; use 100-250 for typical queries)
+- **No rate limiting observed** (but be reasonable)
+
 ## Workflow
 
-### 1. Navigate to person search
+### 1. Simple person search
 
-```
-browser_navigate → https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen
-```
+Search for persons by name using the `q` parameter.
 
-### 2. Simple search
-
-The page has a search box at the top. Type a surname and click "Zoeken".
-
-URL parameter search works:
-
-```
-https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen?ss={"q":"knijf"}
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/person?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511&q=knijf&rows=25'
 ```
 
-The `ss` parameter takes a JSON object with `"q"` as the search term.
+**Response structure:**
 
-### 3. Advanced search
-
-Click **"Uitgebreid zoeken"** to expand the advanced search panel.
-
-**Eerste persoon (First person):**
-
-| Field | Description |
-|-------|-------------|
-| Voornaam | First name |
-| Patroniem | Patronymic |
-| Tussenvoegsel | Prefix ("de", "van", etc.) |
-| Achternaam | Surname |
-| Rol | Role dropdown (see Role options below) |
-
-**Tweede persoon (Second person):** Same fields as first person — useful for
-finding couples.
-
-**Registratie type checkboxes:**
-
-| Type | Description | Era |
-|------|-------------|-----|
-| DTB Dopen | Baptism records | Pre-1811 |
-| DTB Trouwen | Marriage records | Pre-1811 |
-| DTB Begraven | Burial records | Pre-1811 |
-| BS Geboorte | Birth certificates | Post-1811 |
-| BS Huwelijk | Marriage certificates | Post-1811 |
-| BS Overlijden | Death certificates | Post-1811 |
-| BS Echtscheiding | Divorce records | Post-1811 |
-| Bevolkingsregister | Population register | Various |
-| Notariële akten | Notarial deeds | Various |
-| Militieregisters | Military registers | 19th century |
-| Adresboeken | Address books | Various |
-| Attestaties Doopsgezinden | Mennonite attestations | Various |
-| Bonboeken | Receipt books | Various |
-| Borgbrieven | Surety letters | Various |
-| Collaterale successie | Collateral inheritance | Various |
-| Kohier Gedwongen Leningen | Forced loan registers | Various |
-| Lijfrente | Annuity records | Various |
-| Oud Rechterlijke Akten | Old judicial records | Pre-1811 |
-| Paspoorten | Passports | Various |
-| Politierapporten | Police reports | Various |
-| Poorterboeken | Citizenship registers | Various |
-| Transportregisters | Property transfer registers | Various |
-
-**Role dropdown options:** aangever, arrestant, begunstigde, borg, bruid,
-bruidegom, dader, eerdere man, eerdere vrouw, ex-man, ex-vrouw, genoemd,
-geregistreerde, getuige, heffer, kind, koper, lidmaat, lijk, loteling, moeder,
-moeder bruid, moeder bruidegom, nachtverblijver, ontvanger, overledene, partner,
-plaatsvervanger, poorter, relatie, slachtoffer, vader, vader bruid, vader
-bruidegom, verdachte, verkoper.
-
-### 4. Facet filters
-
-After searching, results can be filtered using sidebar facet buttons:
-
-| Filter | Description |
-|--------|-------------|
-| **Bron** | Source type (BS Geboorte, DTB Dopen, etc.) |
-| **Gemeente** | Municipality |
-| **Plaats** | Place within municipality |
-| **Rol** | Role in record |
-| **Periode** | Date range |
-
-Click a filter button to expand options with counts. Click an option to filter.
-Active filters appear under "Actieve filters:" and can be removed by clicking
-them.
-
-### 5. Read results
-
-Results appear in a table with columns: Voornaam, Patroniem, Achternaam, Plaats,
-Rol, Datum, Type registratie.
-
-25 results per page. Pagination at top and bottom with page number input and
-Volgende/Vorige links.
-
-Scan indicator icons:
-- "Er is een scan beschikbaar, gekoppeld aan de akte!" — direct scan of the
-  record
-- "Er zijn scans van het register beschikbaar!" — scans of the register (not
-  linked to specific page)
-
-### 6. View record details
-
-Click a result row to expand inline details showing:
-
-- **Source heading** (e.g., "Overlijdensregister van Nieuwkoop, 1853 - 1862;")
-- **Soort registratie** and **Gemeente**
-- **Bijzonderheden** — additional details (aktenaam, timestamps, remarks)
-- **Archive reference** — link to Inventarisnummer/Archiefnummer
-- **Person list** with roles (Overledene, Relatie, Vader, Moeder, etc.)
-- **Bronvermelding** — full citation with archive/inventory/akte numbers
-- **Scan thumbnails** — click "Bekijk akte" to view, "Download scan" to download
-- **Paginaweergave** link — opens full page view of the record
-
-### 7. Full page view
-
-The "Paginaweergave" link opens a dedicated page at:
-
-```
-/collecties/personen/zoek-op-personen/deeds/[UUID]?person=[UUID]
+```json
+{
+  "metadata": {
+    "pagination": { "total": 398, "rows": 25, "currentPage": 1, "pages": 16 }
+  },
+  "person": [
+    {
+      "id": "UUID",
+      "deed_id": "UUID",
+      "register_id": "UUID",
+      "metadata": {
+        "voornaam": "Cornelia",
+        "achternaam": "Knijf",
+        "geslachtsnaam": "Knijf",
+        "tussenvoegsel": "",
+        "type_title": "overledene",
+        "beroep": "zonder",
+        "leeftijd": "60 jaar",
+        "plaats": "Zevenhoven",
+        "plaats_wonen": "Zevenhoven",
+        "plaats_geboorte": "Breukelen",
+        "datum_overlijden": "18710307",
+        "deed_type_title": "BS Overlijden",
+        "register_naam": "Overlijdensakten 1863-1872",
+        "register_gemeente": "Zevenhoven",
+        "inventarisnummer": "61",
+        "register_archiefnummer": "132.1.06",
+        "person_display_name": "Cornelia Knijf",
+        "datum": 18710307,
+        "has_assets": "deed"
+      }
+    }
+  ]
+}
 ```
 
-This shows the same data in a full-page layout with larger scan viewer.
+### 2. Advanced person search (by specific fields)
 
-## URL structure
+Use `fq` (filter query) with Solr-style field:value syntax. Values with spaces
+must be URL-encoded and quoted.
 
-**Search URL:**
+**Search by surname and first name:**
 
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/person?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511&q=*:*&fq=search_t_geslachtsnaam:%22knijf%22+AND+search_t_voornaam:%22cornelia%22&rows=25'
 ```
-https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen?ss={"q":"search term"}
+
+**Available search fields for fq:**
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `search_t_geslachtsnaam` | Surname | `"knijf"` |
+| `search_t_voornaam` | First name | `"cornelia"` |
+| `search_t_tussenvoegsel` | Prefix | `"de"` |
+| `search_t_patroniem` | Patronymic | `"jansz"` |
+
+### 3. Filter by record type and municipality
+
+Combine `q` with `fq` for facet filtering.
+
+**Filter by deed type:**
+
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/person?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511&q=knijf&fq=search_s_deed_type_title:%22BS+Geboorte%22&rows=25'
 ```
 
-**With facet filter:**
+**Filter by municipality:**
 
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/person?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511&q=knijf&fq=search_s_register_gemeente:%22Ter+Aar%22&rows=25'
 ```
-https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen/persons?f={"search_s_deed_type_title":{"v":"DTB Dopen"}}&ss={"q":"knijf"}
+
+**Combine multiple filters (AND):**
+
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/person?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511&q=knijf&fq=search_s_deed_type_title:%22BS+Geboorte%22+AND+search_s_register_gemeente:%22Ter+Aar%22&rows=25'
 ```
+
+**Available facet filter fields:**
+
+| Field | Description | Example values |
+|-------|-------------|---------------|
+| `search_s_deed_type_title` | Record type | `"BS Geboorte"`, `"BS Huwelijk"`, `"BS Overlijden"`, `"DTB Dopen"`, `"DTB Trouwen"`, `"DTB Begraven"`, `"Notariele akten"`, `"Bevolkingsregister"` |
+| `search_s_register_gemeente` | Municipality | `"Ter Aar"`, `"Leiden"`, `"Nieuwkoop"`, `"Zevenhoven"`, `"Hillegom"` |
+| `search_s_plaats` | Place | Same as gemeente plus sub-locations |
+| `search_s_type_title` | Role in record | `"overledene"`, `"vader"`, `"moeder"`, `"kind"`, `"bruid"`, `"bruidegom"`, `"getuige"` |
+
+### 4. Pagination and sorting
 
 **Pagination:**
 
-```
-&page=2
-```
-
-## Global search
-
-The site also has a global search at:
-
-```
-https://www.erfgoedleiden.nl/zoekresultaten?trefwoord=knijf
+```bash
+&page=2&rows=100
 ```
 
-This shows results across all collections: Archieven, Beelden, Kranten (493
-newspaper hits!), Personen, Monumenten, Bibliotheek, etc. Click "Personen" to go
-to person results.
+**Sorting (use order_ prefixed fields):**
 
-## Knijf records overview
+```bash
+&sort=order_i_datum+desc    # newest first
+&sort=order_i_datum+asc     # oldest first
+&sort=order_s_geslachtsnaam+asc  # alphabetical by surname
+```
 
-The 398 Knijf records break down as:
-- **BS Overlijden:** 128 (death certificates)
-- **BS Geboorte:** 113 (birth certificates)
-- **BS Huwelijk:** 79 (marriage certificates)
-- **DTB Dopen:** 27 (baptisms, mostly Leiden branch — Arie/Abraham Knijf)
-- **DTB Begraven:** 21 (burials)
-- **Notariële akten:** 18 (notarial deeds, Leiden)
-- **DTB Trouwen:** 9 (marriages)
-- **Others:** Bevolkingsregister (1), Militieregisters (1), Adresboeken (1)
+### 5. Get deed (record) details
 
-The Leiden DTB records appear to be a separate "de Knijf" branch (Abraham de
-Knijf, Arie Knijf) centered in Leiden, NOT the Woerden patrilineal line.
+Fetch the full record by deed ID. Includes scan/asset URLs.
+
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/deed/{deed_id}?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511'
+```
+
+**Response includes:**
+
+- `metadata.gemeente` — municipality
+- `metadata.type_title` — record type (BS Overlijden, DTB Dopen, etc.)
+- `metadata.nummer` — akte number
+- `metadata.naam` — register name
+- `metadata.diversen` — additional details (remarks, corrections, archive link)
+- `metadata.archiefnummer` — archive number
+- `metadata.inventarisnummer` — inventory number
+- `asset[]` — array of scan images with IIIF URLs
+
+### 6. Get all persons in a deed
+
+To see everyone mentioned in a record (overledene, vader, moeder, getuigen):
+
+```bash
+curl -s 'https://webservices.memorix.nl/genealogy/person?apiKey=3288aeb2-c2a5-40b4-941b-f9beb2089511&q=*:*&fq=deed_id:%22{deed_id}%22&rows=25'
+```
+
+### 7. Access scan images
+
+Deed details include `asset[]` with IIIF Image API URLs:
+
+| Size | URL pattern |
+|------|-------------|
+| Thumbnail (100px) | `{iiifUrl}full/!100,100/0/default.jpg` |
+| Medium (250px) | `{iiifUrl}full/!250,250/0/default.jpg` |
+| Large (640px) | `{iiifUrl}full/!640,480/0/default.jpg` |
+| Full size | `{iiifUrl}full/max/0/default.jpg` |
+| Download | `asset[].download` field |
+
+The `iiifUrl` is in `asset[].iiifUrl`, e.g.:
+`https://elo.memorix.io/resources/iiif/3/{uuid}/`
+
+### 8. Build website URL for user reference
+
+To link users to the record on the website:
+
+**Search results:**
+
+```
+https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen/persons?ss={"q":"knijf"}
+```
+
+**Single deed (full page view):**
+
+```
+https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen/deeds/{deed_id}?person={person_id}
+```
+
+## Complete query parameter reference
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `apiKey` | API key (required) | `3288aeb2-c2a5-40b4-941b-f9beb2089511` |
+| `q` | Search query | `knijf`, `*:*` (all) |
+| `fq` | Filter query (Solr syntax) | `search_s_deed_type_title:"BS Geboorte"` |
+| `rows` | Results per page (max ~500) | `25`, `100`, `250` |
+| `page` | Page number | `1`, `2` |
+| `sort` | Sort field and direction | `order_i_datum desc` |
+
+## API endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /person` | Search persons |
+| `GET /person/{id}` | Get single person |
+| `GET /deed/{id}` | Get deed (record) with assets |
+| `GET /register/{id}` | Get register details |
+| `GET /config` | Get field/facet configuration |
+
+## Fallback (browser automation)
+
+If the API is unavailable, returns errors, or the API key has been rotated,
+fall back to Playwright browser automation. See the original `erfgoed-leiden`
+skill for the full browser workflow.
+
+To find the current API key, fetch the search page HTML and extract
+`data-api-key` from the `#pic-genealogy` element:
+
+```bash
+curl -sL 'https://www.erfgoedleiden.nl/collecties/personen/zoek-op-personen/persons' | grep -oP 'data-api-key="\K[^"]+'
+```
 
 ## When to use vs other sources
 
@@ -229,6 +278,8 @@ Knijf, Arie Knijf) centered in Leiden, NOT the Woerden patrilineal line.
 
 **Archive ref:** Archiefnummer [nr], Inventarisnummer [nr], Aktenummer [nr]
 **Scan available:** Yes/No
+**Scan URL:** [IIIF download URL if available]
+**Web link:** [website URL for the deed]
 
 **Confidence:** Tier B — official archive record from Erfgoed Leiden
 ```

@@ -1,85 +1,249 @@
 ---
-name: gelders-archief
+name: gelders-archief-optimized
 description: |
-  Access civil registry records and scanned documents at the Gelders Archief
-  (geldersarchief.nl) via Playwright browser automation. Use this skill whenever you
-  need to view the actual scanned birth/marriage/death certificate from Gelderland,
-  verify a record's details against the original handwritten document, or search
-  the Gelders Archief's person database. Triggers on: "check gelders archief",
-  "view the scan", "see the original certificate", "look up in the Gelderland archive",
-  "/gelders-archief", or when following a "Naar bron" link from WieWasWie that points
-  to geldersarchief.nl. The Gelders Archief covers Gelderland province — including
-  Ede/Bennekom, Barneveld, Apeldoorn, Nijkerk, Zutphen, and Arnhem. No login required
-  for viewing records and scans.
+  Access civil registry records from the Gelders Archief (geldersarchief.nl)
+  via the Open Archives JSON API instead of Playwright browser automation.
+  10-50x faster than the browser-based skill. Use this skill whenever you need
+  to search the Gelders Archief person database, view record details (birth,
+  marriage, death), or verify a record against indexed data. Triggers on:
+  "check gelders archief", "view the record", "look up in the Gelderland archive",
+  "/gelders-archief", or when following a "Naar bron" link from WieWasWie that
+  points to geldersarchief.nl. The Gelders Archief covers Gelderland province --
+  including Ede/Bennekom, Barneveld, Apeldoorn, Nijkerk, Zutphen, and Arnhem.
+  No login or API key required.
 ---
 
-# Gelders Archief — Gelderland Province Archive
+# Gelders Archief -- Optimized (Open Archives JSON API)
 
-Access indexed records and original scanned documents from the Gelders Archief in
-Arnhem. This is the primary archive for Gelderland province, which covers many
-branches of the de Knijf/Knijff family tree (Ede, Bennekom, Barneveld, Apeldoorn).
+Access indexed records from the Gelders Archief in Arnhem via the Open Archives
+REST API. Returns structured JSON data with person names, event details, parent
+names, archive references, and permalink URLs -- all without browser automation.
 
-No login required for viewing records and scanned documents.
+No login or API key required. Rate limited to 4 requests/second per IP.
 
-## Two ways to access
+## Primary method: Open Archives JSON API
 
-### 1. Via permalink from WieWasWie
-
-WieWasWie results include a "Naar bron" link that goes directly to the Gelders
-Archief record. These URLs look like:
-```
-https://permalink.geldersarchief.nl/[UUID]
-```
-They redirect to the full record page with scanned documents.
-
-### 2. Via person search
+### Search for persons
 
 ```
-browser_navigate → https://www.geldersarchief.nl/bronnen/personen?view=maisinternet
+curl "https://api.openarchieven.nl/1.1/records/search.json?name=<QUERY>&archive_code=gld&number_show=<N>&lang=nl"
 ```
 
-This opens the person database search. Fill in name fields and search.
+**Required parameters:**
 
-## Record page layout
+- `name` -- search query (supports multiple names separated by `&` for
+  combined record search, e.g., `Jacob de Knijf & Geesje van den Hul`)
 
-When viewing a specific record (via permalink or search), the page shows:
+**Optional parameters:**
 
-**Structured data fields:**
-- Aktenummer (record number)
-- Aktedatum (record date — this is the registration date)
-- Akteplaats (registration place — the municipality)
-- Geboortedatum / Huwelijksdatum / Overlijdensdatum (event date)
-- Geboorteplaats (event place — often the village within the municipality)
-- Kind / Bruidegom / Bruid / Overledene (the subject)
-- Vader (father)
-- Moeder (mother)
-- Aktesoort (record type: Geboorteakte, Huwelijksakte, Overlijdensakte)
-- Toegangsnummer (archive access number, e.g., "0207")
-- Inventarisnummer (inventory number, e.g., "5312.02")
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `archive_code` | Always use `gld` for Gelders Archief | none |
+| `number_show` | Results per page (max 100) | 10 |
+| `start` | Pagination offset | 0 |
+| `eventplace` | Filter by place (e.g., `Bennekom`, `Ede`, `Arnhem`) | none |
+| `sourcetype` | Filter by source type (see below) | none |
+| `relationtype` | Filter by role (see below) | none |
+| `sort` | Sort column: 1=Name, 2=Role, 3=Event, 4=Date, 5=Place, 6=Source | 1 |
+| `lang` | Language (`nl` or `en`) | `nl` |
 
-**Scanned pages:**
-Below the structured data, there are numbered thumbnail links (1, 2, 3, etc.)
-that open a document viewer showing the actual handwritten certificate pages.
-Click a thumbnail to open the scan viewer.
+**Source types for `sourcetype` parameter:**
 
-## Viewing scans
+- `BS Geboorte` -- birth certificate (Burgerlijke Stand)
+- `BS Huwelijk` -- marriage certificate
+- `BS Overlijden` -- death certificate
 
-The scan viewer shows the original handwritten document. These are the primary
-sources — Tier A evidence if you can read the handwriting. The scans are high
-resolution and can be zoomed.
+**Relation types for `relationtype` parameter:**
 
-To navigate between scan pages, use the numbered links or "Volgende" (next).
+- `Kind` -- child (subject of birth record)
+- `Bruidegom` -- groom
+- `Bruid` -- bride
+- `Overledene` -- deceased
+- `Vader` -- father
+- `Moeder` -- mother
 
-Note: 19th century Dutch handwriting (especially pre-1850) can be difficult to
-read. Common challenges: the long s (ſ), abbreviations, varying ink quality.
+**Search response structure:**
 
-## Birth date vs registration date (same as WieWasWie)
+```json
+{
+  "query": { "archive": "Gelders Archief", "name": "...", "..." : "..." },
+  "response": {
+    "number_found": 108,
+    "docs": [
+      {
+        "pid": "Person3043910002",
+        "identifier": "755EDE30-21A7-4CA4-B589-006AE10E7E17",
+        "archive_code": "gld",
+        "personname": "Aaltje de Knijf",
+        "relationtype": "Kind",
+        "eventtype": "Geboorte",
+        "eventdate": { "day": 4, "month": 11, "year": 1891 },
+        "eventplace": ["Bennekom"],
+        "sourcetype": "BS Geboorte",
+        "url": "https://www.openarchieven.nl/gld:755EDE30-..."
+      }
+    ]
+  }
+}
+```
 
-The Gelders Archief shows both:
-- **Geboortedatum** = actual birth date
-- **Aktedatum** = registration date (when declared at town hall)
+### Get full record detail
 
-Use the geboortedatum for GEDCOM entries.
+Use the `identifier` from search results to fetch the complete record:
+
+```
+curl "https://api.openarchieven.nl/1.1/records/show.json?identifier=<UUID>&archive_code=gld&lang=nl"
+```
+
+**Show response structure (birth record example):**
+
+```json
+{
+  "Person": [
+    {
+      "@pid": "Person3043910002",
+      "PersonName": {
+        "PersonNameFirstName": "Aaltje",
+        "PersonNamePrefixLastName": "de",
+        "PersonNameLastName": "Knijf"
+      },
+      "Gender": "Vrouw"
+    },
+    {
+      "@pid": "Person3043910003",
+      "PersonName": {
+        "PersonNameFirstName": "Jacob",
+        "PersonNamePrefixLastName": "de",
+        "PersonNameLastName": "Knijf"
+      },
+      "Age": { "PersonAgeLiteral": "37" },
+      "Profession": "landbouwer"
+    },
+    {
+      "@pid": "Person3043910004",
+      "PersonName": {
+        "PersonNameFirstName": "Geesje",
+        "PersonNamePrefixLastName": "van den",
+        "PersonNameLastName": "Hul"
+      },
+      "Profession": "zonder beroep"
+    }
+  ],
+  "Event": {
+    "EventType": "Geboorte",
+    "EventDate": {
+      "LiteralDate": "04-11-1891",
+      "Year": "1891", "Month": "11", "Day": "04"
+    },
+    "EventPlace": { "Place": "Bennekom" }
+  },
+  "RelationEP": [
+    { "PersonKeyRef": "Person3043910002", "RelationType": "Kind" },
+    { "PersonKeyRef": "Person3043910003", "RelationType": "Vader" },
+    { "PersonKeyRef": "Person3043910004", "RelationType": "Moeder" }
+  ],
+  "Source": {
+    "SourcePlace": { "Country": "Nederland", "Place": "Ede" },
+    "SourceDate": { "LiteralDate": "04-11-1891" },
+    "SourceType": "BS Geboorte",
+    "SourceReference": {
+      "InstitutionName": "Gelders Archief",
+      "Archive": "0207",
+      "Collection": "Burgerlijke stand Gelderland, dubbelen",
+      "Book": "Ede, Geboorteregister",
+      "RegistryNumber": "5304.02",
+      "DocumentNumber": "408"
+    },
+    "SourceDigitalOriginal": "https://permalink.geldersarchief.nl/...",
+    "RecordGUID": "{755EDE30-21A7-4CA4-B589-006AE10E7E17}"
+  }
+}
+```
+
+### Construct Gelders Archief permalink
+
+The permalink to the original Gelders Archief record page (with scan viewer)
+can be constructed from the identifier by removing dashes:
+
+```
+https://permalink.geldersarchief.nl/<UUID-without-dashes>
+```
+
+Example: identifier `755EDE30-21A7-4CA4-B589-006AE10E7E17` becomes
+`https://permalink.geldersarchief.nl/755EDE3021A74CA4B589006AE10E7E17`
+
+### Mapping fields to the output format
+
+From the `show` response, extract:
+
+- **Person name**: from Person array, match via RelationEP `RelationType`
+- **Father**: RelationType `Vader`
+- **Mother**: RelationType `Moeder`
+- **Partner**: RelationType `Bruidegom`, `Bruid`, or `other:(ex-)partner`
+- **Event date**: `Event.EventDate.LiteralDate` (the event date, not SourceDate)
+- **Event place**: `Event.EventPlace.Place`
+- **Registration date**: `Source.SourceDate.LiteralDate` (= aktedatum)
+- **Registration place**: `Source.SourcePlace.Place` (= akteplaats)
+- **Toegangsnummer**: `Source.SourceReference.Archive`
+- **Inventarisnummer**: `Source.SourceReference.RegistryNumber`
+- **Aktenummer**: `Source.SourceReference.DocumentNumber`
+- **Scan link**: `Source.SourceDigitalOriginal`
+
+## Typical workflow
+
+### 1. Search by person name
+
+```bash
+curl -s "https://api.openarchieven.nl/1.1/records/search.json?name=Jacob+de+Knijf&archive_code=gld&eventplace=Bennekom&sourcetype=BS+Geboorte&number_show=20&lang=nl"
+```
+
+### 2. Get full record detail for each match
+
+```bash
+curl -s "https://api.openarchieven.nl/1.1/records/show.json?identifier=<UUID>&archive_code=gld&lang=nl"
+```
+
+### 3. Construct permalink for scan viewing
+
+```
+https://permalink.geldersarchief.nl/<UUID-without-dashes>
+```
+
+Note: viewing the actual scan images still requires visiting the permalink
+in a browser (Playwright fallback), since the scan viewer uses JavaScript.
+
+## Parallel batch lookup
+
+Since this is a REST API (no browser session), multiple lookups can run
+in parallel. For verifying a family line with 10 people:
+
+```bash
+# Search + show can be done in parallel for independent persons
+# Respect the 4 req/sec rate limit
+```
+
+This is a major advantage over Playwright, which is limited to a single
+sequential browser session.
+
+## Combined two-person search
+
+To find records where two people appear together (e.g., parents on a
+child's birth record), use `&` in the name parameter:
+
+```
+name=Jacob+de+Knijf+%26+Geesje+van+den+Hul
+```
+
+This returns all records mentioning both persons (births, marriages, deaths).
+
+## Birth date vs registration date
+
+The API distinguishes between:
+
+- **Event date** (`Event.EventDate`) = actual birth/marriage/death date
+- **Source date** (`Source.SourceDate`) = registration date (aktedatum)
+
+Use the event date for GEDCOM entries.
 
 ## Municipalities covered
 
@@ -95,20 +259,62 @@ municipalities. Key ones for this family tree:
 - **Zutphen**
 - **Arnhem**
 
+## Fallback: Playwright browser automation
+
+If the Open Archives API is unavailable, returns errors, or when you need
+to view the actual scan images (handwritten certificates), fall back to
+Playwright browser automation.
+
+### Via permalink
+
+```
+browser_navigate -> https://permalink.geldersarchief.nl/<UUID-without-dashes>
+```
+
+This opens the full record page with scanned documents.
+
+### Via person search form
+
+```
+browser_navigate -> https://www.geldersarchief.nl/bronnen/personen?view=maisinternet
+```
+
+Fill in the search form fields and submit. The MAIS/Archieven.nl platform
+loads results via JavaScript -- WebFetch/curl cannot access the search
+results directly (only skeleton HTML is returned).
+
+### Viewing scans
+
+The scan viewer on the Gelders Archief requires JavaScript rendering.
+Navigate to the permalink URL and click thumbnail links (1, 2, 3...) to
+open the document viewer showing the actual handwritten certificate pages.
+
 ## Output format
 
 ```
-## Gelders Archief Result — [record type]
+## Gelders Archief Result -- [record type]
 
 **Person:** [name]
 **Event:** [type], [event date] in [event place]
 **Registered:** [akte date] in [akte place]
 
-**Father:** [name]
-**Mother:** [name]
+**Father:** [name], age [age], [profession]
+**Mother:** [name], [profession]
 
-**Archive ref:** Toegangsnr [nr], Inventarisnr [nr], Aktenr [nr]
-**Scan available:** Yes/No [number of pages]
+**Archive ref:** Toegangsnr [Archive], Inventarisnr [RegistryNumber], Aktenr [DocumentNumber]
+**Permalink:** https://permalink.geldersarchief.nl/[UUID]
+**Scan available:** Check permalink
 
-**Confidence:** Tier A (if scan read) / Tier B (indexed data only)
+**Confidence:** Tier B (indexed data from official archive via API)
 ```
+
+## Limitations
+
+- The Open Archives API contains indexed data only -- not all Gelders
+  Archief records may be in their dataset (they note the database is
+  "voortdurend in opbouw" / continuously being built)
+- Scan images are not accessible via API -- use the permalink in a browser
+- Rate limit: 4 requests/second per IP (sufficient for genealogy research)
+- Maximum 100 results per search page (paginate with `start` parameter)
+- The combined `&` search in the name field is powerful but quirky -- test
+  with known records first
