@@ -1,3 +1,9 @@
+## v0.7.0 (2026-03-19)
+
+### Feat
+
+- **hooks**: add file lock for concurrent agent GEDCOM/FINDINGS access
+
 ## v0.6.0 (2026-03-19)
 
 ### Feat
