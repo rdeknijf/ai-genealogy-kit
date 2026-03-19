@@ -110,6 +110,15 @@ session**, so only one agent can use Playwright at a time. Options:
   and GEDCOM parsing (no browser needed) while one agent handles all
   browser lookups sequentially
 
+### File locking for concurrent agents
+
+`private/tree.ged` and `private/research/FINDINGS.md` are protected by
+a PreToolUse/PostToolUse hook (`.claude/hooks/file-lock.sh`). When an
+agent edits either file, other agents wait (up to 5s) for the lock to
+release. Each file has its own independent lock. Stale locks from
+crashed agents expire after 5 minutes. No action needed — the hook
+runs automatically on Edit/Write calls.
+
 ## Goals
 
 1. Understand the current state of the family tree
