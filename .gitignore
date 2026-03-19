@@ -17,6 +17,10 @@ scripts/download-media.sh
 # Personal Claude config
 CLAUDE.local.md
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
+
+# Personal anchor files
+OPTIMIZATION.md
 
 # Browser automation logs
 .playwright-mcp/
