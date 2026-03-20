@@ -39,6 +39,12 @@ if [[ "$EVENT" == "PreToolUse" ]]; then
 
     # Check for stale lock (owner crashed without cleanup)
     LOCK_TIME=$(cat "$LOCK_DIR/timestamp" 2>/dev/null || echo "0")
+    # If the timestamp is missing or corrupted (non-numeric), treat the lock as stale.
+    if ! [[ "$LOCK_TIME" =~ ^[0-9]+$ ]]; then
+      rm -rf "$LOCK_DIR"
+      # Loop will retry mkdir on next iteration
+      continue
+    fi
     NOW=$(date +%s)
     AGE=$(( NOW - LOCK_TIME ))
     if (( AGE > STALE_SECONDS )); then
