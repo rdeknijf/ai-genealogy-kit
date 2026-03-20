@@ -15,7 +15,8 @@ if [[ -z "$SESSION_ID" ]]; then
 fi
 STALE_SECONDS=300
 LOCK_NAME="playwright-browser"
-LOCK_DIR="/tmp/${LOCK_NAME}.lock"
+CURRENT_UID=$(id -u)
+LOCK_DIR="/tmp/${LOCK_NAME}.${CURRENT_UID}.lock"
 
 allow() {
   echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'
