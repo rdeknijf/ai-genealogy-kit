@@ -28,6 +28,13 @@ OPTIMIZATION*.md
 
 # Research images (scans, photos)
 *.png
+*.jpg
+
+# One-time correction scripts
+scripts/apply_meta_corrections.py
+
+# Draft skills (not ready for commit)
+.claude/skills/budget-loop.md
 
 # Archives
 *.zip
