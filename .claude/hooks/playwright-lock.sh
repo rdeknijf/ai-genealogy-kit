@@ -9,6 +9,10 @@ INPUT=$(cat)
 EVENT=$(echo "$INPUT" | jq -r '.hook_event_name')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 
+if [[ -z "$SESSION_ID" ]]; then
+  echo 'Missing required "session_id" in hook payload; cannot safely manage Playwright lock.' >&2
+  exit 1
+fi
 STALE_SECONDS=300
 LOCK_NAME="playwright-browser"
 LOCK_DIR="/tmp/${LOCK_NAME}.lock"
