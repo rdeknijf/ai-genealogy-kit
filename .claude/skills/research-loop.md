@@ -48,6 +48,19 @@ gaps. For each direct ancestor, check:
 - Marriage: has date AND place AND source?
 - Parents linked (FAMC)?
 
+**Privacy filter — skip recent people automatically:**
+
+Before selecting targets, filter out anyone whose records fall within
+archive privacy periods. Unless the user specifically asks to research
+a recent person, skip them silently:
+
+- **Birth records:** restricted if born < 110 years ago (~1916+)
+- **Death records:** restricted if died < 50 years ago (~1976+)
+- **Marriage records:** restricted if married < 75 years ago (~1951+)
+
+These are approximate Dutch civil registry thresholds. Don't waste
+lookup cycles on records that won't be publicly available online.
+
 **Priority order** for which generation to work on:
 
 1. Great-grandparents (gen 3) — closest, most impactful

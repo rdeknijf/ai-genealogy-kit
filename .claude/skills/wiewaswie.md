@@ -309,6 +309,63 @@ If a village name returns no results, try the municipality instead:
 **Confidence:** Tier B -- official civil registry record from [archive name]
 ```
 
+## Pre-1811 DTB records: patronymic search technique
+
+**Critical insight:** Before ~1811, Dutch church records (DTB) used patronymics
+(father's first name as child's surname), not fixed family surnames. WieWasWie
+indexes these records under the patronymic form, so **surname searches fail**
+for people born before ~1780.
+
+**Example:** Hendrik Jeths (b. 1767) is indexed as "Hendrik Aarts Jets" --
+patronymic "Aarts" (son of Aart) + variant spelling "Jets". Searching for
+surname "Jeths" returns zero results.
+
+### The technique
+
+Instead of searching by surname, search by **first name + role + place + date range**:
+
+```json
+{
+  "PersonA": {
+    "Voornaam": "Hendrik",
+    "Achternaam": "",
+    "Rol": "kind"
+  },
+  "PeriodeVan": "1765",
+  "PeriodeTot": "1770",
+  "Plaats": "Beekbergen",
+  "DocumentType": "DTB Dopen"
+}
+```
+
+This returns ALL children named Hendrik baptized in Beekbergen 1765-1770.
+Scan the results for patronymics matching the expected father's name.
+
+### When to use this technique
+
+- Person born before ~1780 (patronymic era)
+- DocumentType is DTB Dopen, DTB Trouwen, or DTB Begraven
+- Standard surname search returns 0 results
+- You know the person's first name and approximate location/date
+
+### Patronymic patterns to recognize
+
+| Indexed name | Meaning | Family surname |
+|-------------|---------|----------------|
+| Hendrik Aarts Jets | Hendrik, son of Aart Jets | Jeths |
+| Aart Rijkse | Aart, son of Rijk | Jeths |
+| Rijk Aarts | Rijk, son of Aart | Jeths |
+| Aert Isacks | Aert, son of Isaac | Jeths |
+| Jan Riksen | Jan, son of Rijk | Jeths |
+
+The surname "Jets/Jeths/Jethsen" appears intermittently alongside patronymics.
+Church records may use surname, patronymic, or both depending on the minister.
+
+### Verified results
+
+This technique found 4 baptism records in the Jeths line (1666-1767) that
+were invisible to surname searches, enabling verification back to 1666.
+
 ## Recommended workflow for hardening runs
 
 For batch lookups (e.g., verifying an entire family line), use this sequence:
@@ -321,6 +378,38 @@ For batch lookups (e.g., verifying an entire family line), use this sequence:
 
 Each lookup takes ~0.5s total (search + detail) vs ~20s with Playwright.
 For a 30-person hardening run, that is ~15 seconds vs ~10 minutes.
+
+## Known indexing gaps
+
+Not all civil registry records are indexed on WieWasWie. When a lookup
+returns no results, it may be an indexing gap rather than a missing record.
+Check the patterns below before concluding a record doesn't exist.
+
+### Ede overlijden registers ~1811-1832
+
+**Confirmed gap (2026-03-20):** Three independent lookups for Ede deaths
+in 1816, 1826, and 1832 all failed, while records from the same Gelders
+Archief collection (0207) in neighboring municipalities (Apeldoorn,
+Scherpenzeel, Zutphen, Putten) for the same period ARE indexed. An Ede
+death from 1833 WAS found, suggesting the gap ends around 1832-1833.
+
+**Workaround:** For Ede deaths before ~1833, skip WieWasWie and go
+directly to Gelders Archief scans via their online beeldbank or request
+the relevant register pages.
+
+### De Bilt overlijden registers ~1900-1910
+
+Death record of Aletta Bos (d. 1906, De Bilt) not found. De Bilt is in
+Utrecht province (Het Utrechts Archief, not Gelders Archief). These
+records may not be indexed yet.
+
+### General patterns
+
+- Early civil registers (1811-1820s) are more likely to have gaps
+- Smaller municipalities may have incomplete indexing
+- Always try OpenArchieven as a fallback — different indexing projects
+- If both WieWasWie and OpenArchieven fail, the record likely exists
+  but isn't digitized/indexed yet — try direct archive scan access
 
 ## Login status
 
