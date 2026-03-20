@@ -1,94 +1,108 @@
 ---
-name: het-utrechts-archief
+name: het-utrechts-archief-optimized
 description: |
   Search indexed person records and scanned documents at Het Utrechts Archief
-  (hetutrechtsarchief.nl) via Playwright browser automation. This is the main
-  archive for Utrecht province, covering ALL municipalities including Woerden,
-  Utrecht city, Amersfoort, Zeist, and more. 13.9M+ indexed person records.
-  Especially relevant for Woerden DTB records (doop-, trouw-, begraafboeken) for
-  the Knijf family pre-1811. Use this skill whenever researching family lines from
-  Utrecht province, looking up church records (DTB) for Woerden, or searching civil
-  registry records from anywhere in Utrecht province. Triggers on: "search Het
-  Utrechts Archief", "look up in Utrecht archive", "check Woerden DTB", "Woerden
-  doop records", "Woerden church records", "/het-utrechts-archief", or any genealogy
-  research in the Utrecht province area. No login required for viewing indexed
-  records and scanned documents.
+  (hetutrechtsarchief.nl) via direct URL-parameter searches and WebFetch — no
+  browser automation needed. This is the main archive for Utrecht province,
+  covering ALL municipalities including Woerden, Utrecht city, Amersfoort, Zeist,
+  and more. 13.9M+ indexed person records. Especially relevant for Woerden DTB
+  records (doop-, trouw-, begraafboeken) for the Knijf family pre-1811. Use this
+  skill whenever researching family lines from Utrecht province, looking up church
+  records (DTB) for Woerden, or searching civil registry records from anywhere in
+  Utrecht province. Triggers on: "search Het Utrechts Archief", "look up in Utrecht
+  archive", "check Woerden DTB", "Woerden doop records", "Woerden church records",
+  "/het-utrechts-archief", or any genealogy research in the Utrecht province area.
+  No login required. Parallelizable — no browser needed.
 ---
 
 # Het Utrechts Archief — Utrecht Province Archive
 
-Search 13.9M+ indexed person records from Het Utrechts Archief in Utrecht. This is
-the primary archive for the entire province of Utrecht, covering all municipalities
-including Woerden, Utrecht city, Amersfoort, Zeist, and more.
+Search 13.9M+ indexed person records from Het Utrechts Archief in Utrecht via
+direct URL-parameter searches and WebFetch. No browser automation needed.
+
+This is the primary archive for the entire province of Utrecht, covering all
+municipalities including Woerden, Utrecht city, Amersfoort, Zeist, and more.
 
 Especially relevant for this project: Woerden DTB records (doop-, trouw-,
 begraafboeken) for the Knijf family pre-1811.
 
 No login required for viewing indexed records and scanned documents.
 
-## Workflow
+## Primary method: URL parameters + WebFetch
 
-### 1. Navigate to the person search
+### 1. Search by URL parameters
+
+Construct the search URL directly — the MAIS system accepts GET parameters:
 
 ```
-browser_navigate → https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais?mivast=39&mizig=100&miadt=39&miview=tbl&milang=nl
+https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais?mivast=39&mizig=100&miadt=39&miview=tbl&milang=nl&mip1={surname}&mip3={firstname}
 ```
 
-### 2. Fill the search form
+Use WebFetch to parse the results:
 
-The homepage has a simple "Alle velden" text box. Click **"Uitgebreid zoeken"** to
-expand the advanced search panel with structured fields.
+```
+WebFetch → https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais?mivast=39&mizig=100&miadt=39&miview=tbl&milang=nl&mip1=Knijf
+  prompt: "Extract all search results: name, role, place, date. Show the total number of results and pagination info."
+```
 
-**Advanced search fields:**
+### URL parameters reference
 
-| Group | Field | Description | Notes |
-|-------|-------|-------------|-------|
-| Persoon | Achternaam | Surname | |
-| Persoon | Tussenvoegsel | Prefix | "de", "van", etc. |
-| Persoon | Voornaam | First name | |
-| Persoon | Rol | Role | Dopeling, Bruidegom, Bruid, Vader, Moeder, Getuige |
-| Persoon 2 | Achternaam | Second person surname | Useful for finding couples |
-| Persoon 2 | Tussenvoegsel | Second person prefix | |
-| Persoon 2 | Voornaam | Second person first name | |
-| Persoon 2 | Rol | Second person role | |
-| Overige | Bron | Source type dropdown | See Bron options below |
-| Overige | Plaats | Place | Municipality name |
-| Overige | Periode | Date range | From-to year |
-| Overige | Bevat bestand(en) | Has scans | N.v.t / Ja / Nee |
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `mivast` | Archive ID (always 39) | `39` |
+| `mizig` | Search type (always 100) | `100` |
+| `miadt` | Archive ID (always 39) | `39` |
+| `miview` | View: `tbl` (table) or `ldt` (detail) | `tbl` |
+| `milang` | Language | `nl` |
+| `mip1` | Achternaam (surname) | `Knijf` |
+| `mip2` | Tussenvoegsel (prefix) | `de` |
+| `mip3` | Voornaam (first name) | `Jan` |
+| `mip4` | Rol (role) | `Dopeling`, `Vader`, `Moeder` |
+| `mip5` | Plaats (place) | `Woerden` |
+| `mib1` | Bron code (source type) | See table below |
+| `mij1` | Periode van (year from) | `1700` |
+| `mij2` | Periode tot (year to) | `1811` |
+| `mistart` | Pagination offset | `0`, `20`, `40` |
 
-**Bron dropdown options include:**
-- Doopinschrijving (baptism — pre-1811)
-- Trouwinschrijving (marriage — pre-1811)
-- Begraafinschrijving (burial — pre-1811)
-- Geboorteakte (birth — post-1811)
-- Huwelijksakte (marriage — post-1811)
-- Overlijdensakte (death — post-1811)
-- Memorie van successie
-- Notariële akte
-- Persoon in bevolkingsregister
-- And more
+**Bron codes (mib1):**
 
-**Wildcards:** `*` replaces multiple characters (minimum 3 characters before the
-`*`), `_` replaces a single character.
+| Code | Source type |
+|------|-----------|
+| 156 | Doopinschrijving (baptism — pre-1811) |
+| 157 | Trouwinschrijving (marriage — pre-1811) |
+| 158 | Begraafinschrijving (burial — pre-1811) |
+| 109 | Geboorteakte (birth — post-1811) |
+| 110 | Huwelijksakte (marriage — post-1811) |
+| 112 | Overlijdensakte (death — post-1811) |
 
-Click **"Zoekvelden legen"** to clear all fields.
+**Wildcards:** `*` replaces multiple characters (min 3 chars before `*`), `_` replaces a single character.
 
-### 3. Submit and read results
+### 2. Example searches
 
-Click the search button. Results appear in a table with columns:
-Voornaam, Achternaam, Rol, Plaats, Datum.
+**All Knijf records in Woerden, pre-1811 baptisms:**
 
-Pagination: 20 results per page.
+```
+WebFetch → https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais?mivast=39&mizig=100&miadt=39&miview=tbl&milang=nl&mip1=Knijf&mip5=Woerden&mib1=156
+```
+
+**All de Knijf marriage records:**
+
+```
+WebFetch → https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais?mivast=39&mizig=100&miadt=39&miview=tbl&milang=nl&mip1=Knijf&mip2=de&mib1=110
+```
+
+### 3. Pagination
+
+Results show 20 per page. Use `mistart` to paginate:
+
+- Page 1: `mistart=0` (or omit)
+- Page 2: `mistart=20`
+- Page 3: `mistart=40`
 
 ### 4. View record details
 
-Click a result row to expand inline details showing:
-
-- Full structured data (varies by record type — see below)
-- Scanned document thumbnails (numbered page links) below the structured data
-- Click a thumbnail to open the document viewer
-
-### 5. Extract structured data
+Click through to detail view by changing `miview=tbl` to `miview=ldt` and adding
+the record's navigation index. Or use WebFetch on the detail URL from the results.
 
 **Record detail fields vary by record type:**
 
@@ -104,29 +118,6 @@ Begraafdatum, Overledene, Akteplaats, and related fields.
 
 **Geboorteakte / Huwelijksakte / Overlijdensakte (civil registry — post-1811):**
 Similar fields to other Dutch civil registry archives.
-
-## URL parameters
-
-The URL parameters ARE reliable for this archive (unlike OpenArchieven). Key
-parameters for constructing search URLs directly:
-
-| Parameter | Value | Description |
-|-----------|-------|-------------|
-| mivast | 39 | Archive ID |
-| mizig | 100 | Search type |
-| miadt | 39 | Archive ID (repeated) |
-| miview | tbl | Table view (use `ldt` for detail view) |
-| milang | nl | Language |
-| mip1 | | Achternaam |
-| mip2 | | Tussenvoegsel |
-| mip3 | | Voornaam |
-| mip4 | | Rol |
-| mip5 | | Plaats |
-| mib1 | | Bron code (156=Doopinschrijving, 157=Trouwinschrijving, 112=civil registry) |
-| mistart | | Pagination offset (20 per page) |
-
-Note: while URL params work, the form is more reliable for Bron selection since
-the numeric codes aren't always obvious. Use the form for complex searches.
 
 ## Pre-1811 vs post-1811 records
 
@@ -149,6 +140,19 @@ surname may not appear consistently in early records.
 
 DTB records for Woerden use Toegangsnummer codes with a W-prefix (e.g. W020 for
 NH dopen). These are especially relevant for tracing the Knijf family before 1811.
+
+## Fallback: Playwright browser automation
+
+Only needed if the URL-parameter search stops working or for the advanced search
+form with autocomplete dropdowns.
+
+Navigate to the search page:
+
+```
+browser_navigate → https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais?mivast=39&mizig=100&miadt=39&miview=tbl&milang=nl
+```
+
+Click "Uitgebreid zoeken" for the advanced search panel with structured fields.
 
 ## When to use vs other sources
 
