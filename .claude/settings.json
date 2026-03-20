@@ -10,6 +10,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "mcp__playwright",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/playwright-lock.sh",
+            "timeout": 30
+          }
+        ]
       }
     ],
     "PostToolUse": [
@@ -19,6 +29,16 @@
           {
             "type": "command",
             "command": ".claude/hooks/file-lock.sh",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "mcp__playwright",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/playwright-lock.sh",
             "timeout": 5
           }
         ]

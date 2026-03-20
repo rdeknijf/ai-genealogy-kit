@@ -100,24 +100,37 @@ findings with archive references.
 
 Archive lookups use Playwright browser automation (skills in
 `.claude/skills/`). The Playwright MCP server runs a **single browser
-session**, so only one agent can use Playwright at a time. Options:
+session**, so only one agent can use Playwright at a time.
 
-- **Sequential within one agent**: safest, use when the line is short
-- **One agent per source**: split by archive (WieWasWie agent,
-  OpenArchieven agent) — each gets its own Playwright session if
-  multiple MCP servers are configured, but currently they share one
+A PreToolUse/PostToolUse hook (`.claude/hooks/playwright-lock.sh`)
+automatically serializes Playwright access: when one agent holds the
+lock, others wait up to 25 seconds before timing out. Stale locks
+from crashed agents expire after 5 minutes. This means multiple
+sub-agents **can** safely attempt Playwright calls — they will queue
+rather than collide. No manual coordination needed.
+
+Options for parallel research:
+
+- **Multiple agents, all using Playwright**: each agent calls Playwright
+  normally; the lock ensures only one browser operation runs at a time
+  while others wait their turn
 - **Non-Playwright agents**: use sub-agents for analysis, cross-validation,
-  and GEDCOM parsing (no browser needed) while one agent handles all
-  browser lookups sequentially
+  and GEDCOM parsing (no browser needed) while browser-using agents
+  take turns automatically via the lock
 
-### File locking for concurrent agents
+### Locking for concurrent agents
 
-`private/tree.ged` and `private/research/FINDINGS.md` are protected by
-a PreToolUse/PostToolUse hook (`.claude/hooks/file-lock.sh`). When an
-agent edits either file, other agents wait (up to 5s) for the lock to
-release. Each file has its own independent lock. Stale locks from
-crashed agents expire after 5 minutes. No action needed — the hook
-runs automatically on Edit/Write calls.
+Three independent locks protect shared resources:
+
+| Resource | Lock | Hook | Wait timeout |
+|----------|------|------|-------------|
+| `private/tree.ged` | `gedcom-tree-ged` | `.claude/hooks/file-lock.sh` | 5s |
+| `private/research/FINDINGS.md` | `research-findings` | `.claude/hooks/file-lock.sh` | 5s |
+| Playwright browser | `playwright-browser` | `.claude/hooks/playwright-lock.sh` | 25s |
+
+All locks use atomic `mkdir` in `/tmp/`, track ownership by session ID,
+and expire after 5 minutes (stale lock cleanup). No action needed — the
+hooks run automatically on Edit/Write and Playwright MCP tool calls.
 
 ## Goals
 
