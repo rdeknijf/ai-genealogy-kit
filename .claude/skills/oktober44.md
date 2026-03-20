@@ -1,13 +1,15 @@
 ---
-name: oktober44
+name: oktober44-optimized
 description: |
   Search the Stichting Oktober 44 database of 589 men deported from Putten to
   Neuengamme concentration camp during the WWII razzia of October 1-2, 1944.
-  Use this skill whenever researching Putten families during WWII, checking if
-  a person was among the Putten deportees, or investigating wartime fates of
-  Veluwe residents. Triggers on: "check Putten razzia", "search Oktober 44",
-  "was he deported from Putten", "/oktober44", or any WWII research involving
+  Uses direct HTTP calls (WebFetch/curl) instead of browser automation — the site
+  is static HTML. Use this skill whenever researching Putten families during WWII,
+  checking if a person was among the Putten deportees, or investigating wartime
+  fates of Veluwe residents. Triggers on: "check Putten razzia", "search Oktober
+  44", "was he deported from Putten", "/oktober44", or any WWII research involving
   Putten. Only 48 of the 589 men returned; 552 died in camps. No login required.
+  Parallelizable — no browser needed.
 ---
 
 # Stichting Oktober 44 — Putten Razzia Database
@@ -15,7 +17,7 @@ description: |
 Search the database of men deported from Putten during the razzia of October 1-2,
 1944. Contains ~660 records including the 589 deportees and some related persons.
 
-No login required. Static HTML, no JavaScript-heavy UI.
+No login required. Static HTML — no JavaScript needed, fully accessible via HTTP.
 
 ## Important context
 
@@ -24,41 +26,50 @@ to concentration camps (primarily Neuengamme) as reprisal for a resistance attac
 Only 48 returned. This is one of the most devastating reprisal actions in Dutch
 WWII history.
 
-## Search
+## Primary method: HTTP (WebFetch/curl)
 
-### 1. Navigate to the deportee page
+### Browse by letter
+
+The site organizes entries by surname initial. Use WebFetch on:
 
 ```
-browser_navigate → https://oktober44.nl/weggevoerde-mannen
+https://oktober44.nl/showman.php?v={LETTER}%25
 ```
 
-### 2. Search by surname
+Replace `{LETTER}` with a lowercase letter (a-z). The `%25` is URL-encoded `%`
+wildcard. Returns all entries for that letter on a single page.
 
-The page has a search box labeled "Zoek op achternaam" with a "Zoeken" button.
-Type the surname (or part of it) and click "Zoeken".
+Ask WebFetch to extract: names, birth dates, birth places, death dates, and
+detail page URLs ("Lees meer" links).
 
-Alternatively, use the A-Z letter links below the search box to browse by
-surname initial. Clicking a letter loads all entries for that letter via:
-`showman.php?v={letter}%`
+### Search by surname
 
-All entries for a letter appear on a single page — no pagination.
+To search for a specific surname, use the letter of the first character:
 
-### 3. Scan the listing
+```
+WebFetch → https://oktober44.nl/showman.php?v=K%25
+  prompt: "Find all entries with surname matching 'Knoppert'. Extract name, birth date, birth place, death date, and detail page URL."
+```
 
-Each entry shows:
-- **Name** (bold)
-- Geboortedatum (birth date, DD-MM-YYYY)
-- Geboorteplaats (birth place)
-- Overlijdensdatum (death date, DD-MM-YYYY — blank if unknown)
-- "Lees meer" link to detail page
+Since there are only ~660 records total across 26 letters, you can also search
+by browsing the relevant letter(s).
 
-Find the matching person and click "Lees meer".
+### View detail page
 
-### 3. Detail page
+Detail pages are at:
 
-URL pattern: `https://oktober44.nl/weggevoerde-mannen/{id}/{name_slug}`
+```
+https://oktober44.nl/weggevoerde-mannen/{id}/{name_slug}
+```
 
-Fields available:
+Use WebFetch to extract all fields:
+
+```
+WebFetch → https://oktober44.nl/weggevoerde-mannen/314/gerrit__knoppert
+  prompt: "Extract all person details: name, birth date/place, parents, marital status, children, occupation, address, death date/place, burial location, camp numbers, and remarks."
+```
+
+**Fields available on detail pages:**
 
 | Dutch label | English | Notes |
 |-------------|---------|-------|
@@ -84,10 +95,13 @@ Some entries include gravestone photos in a lightbox gallery.
 Same fields are used for all. Survivors have later death dates (1960s-2000s) and
 the "Opmerkingen" field contains liberation/release details.
 
-## Alternative: browse all records
+## Fallback: Playwright browser automation
 
-Since there are only ~660 records, you can iterate all 26 letters to find any
-person. The URL `showman.php?v=%` may return all records at once.
+Only needed if the site adds JavaScript-dependent features or blocks HTTP requests.
+Currently unnecessary — the site is fully static HTML.
+
+Navigate to `https://oktober44.nl/weggevoerde-mannen`, use the A-Z letter links
+or the search box labeled "Zoek op achternaam".
 
 ## Output format
 
