@@ -1,0 +1,34 @@
+[
+  {
+    "id": "example-001",
+    "iiifUrl": "https://cbg.hosting.deventit.net/iiif/image/3.0/6496244/full/max/0/default.jpg",
+    "name": "Knijf, H. (and others)",
+    "collection": "CBG Familieadvertenties tot 1970",
+    "expect": "Page 1 of microfiche with multiple Knijf family announcements from Dordrecht, 1870s.",
+    "aiAnalysis": "Example AI analysis — describe what you read on the scan here. HTML like <b>bold names</b> is supported.",
+    "aiConfidence": "high",
+    "aiConfidenceText": "90% — Clear microfiche, most text legible.",
+    "metadata": {
+      "Source": "CBG Verzamelingen",
+      "Collection": "Familieadvertenties",
+      "Reference": "VFADNL076661"
+    },
+    "sourceUrl": "https://cbgverzamelingen.nl/zoeken?view=detail&id=6f92b65a-9206-57f6-af86-0450c00fa2b5"
+  },
+  {
+    "id": "example-002",
+    "iiifUrl": "https://cbg.hosting.deventit.net/iiif/image/3.0/7129626/full/max/0/default.jpg",
+    "name": "van der Knijf family",
+    "collection": "CBG Familieadvertenties 1970-2000",
+    "expect": "Family announcements for van der Knijf, 1970-2000. Check if any names are recognizable.",
+    "aiAnalysis": "Contains 4 newspaper clippings with death notices for <b>Jacomina van der Knijf</b> (d. 1992), <b>Maartje van der Knijf-Haaring</b> (d. 1993), <b>Cornelia Louwen</b> widow of Hubrecht van der Knijf (d. 1988), and <b>Arie van der Knijf</b> (d. 1993).",
+    "aiConfidence": "high",
+    "aiConfidenceText": "95% — Large clear newspaper clippings.",
+    "metadata": {
+      "Source": "CBG Verzamelingen",
+      "Collection": "Familieadvertenties",
+      "Reference": "VFAENL101833"
+    },
+    "sourceUrl": "https://cbgverzamelingen.nl/zoeken?view=detail&id=570ecc79-d0ac-4716-bcf8-76bc4501e663"
+  }
+]
