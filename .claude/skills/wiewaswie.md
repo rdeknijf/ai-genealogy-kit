@@ -403,6 +403,19 @@ Death record of Aletta Bos (d. 1906, De Bilt) not found. De Bilt is in
 Utrecht province (Het Utrechts Archief, not Gelders Archief). These
 records may not be indexed yet.
 
+### Apeldoorn huwelijk + geboorte registers (20th century)
+
+**Confirmed gap (2026-03-20):** Apeldoorn BS Huwelijk indexing stops
+after **December 1947**. Apeldoorn BS Geboorte is **not indexed at all**
+for the 20th century. Death records continue through at least 1960.
+All indexed records come from Gelders Archief collection 0207A
+("Burgerlijke stand Gelderland, dubbelen 1903-1980"). The scans exist
+in the collection, but the person index is incomplete.
+
+**Workaround:** Browse Gelders Archief scans directly (requires
+Playwright for scan viewer navigation), or contact CODA Apeldoorn
+(coda-apeldoorn.nl/archief) for the original registers.
+
 ### General patterns
 
 - Early civil registers (1811-1820s) are more likely to have gaps
