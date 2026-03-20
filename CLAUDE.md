@@ -96,27 +96,28 @@ parallelize. Launch one agent per person, each tasked with looking up
 that person's birth/marriage/death records and returning structured
 findings with archive references.
 
-### Playwright concurrency constraint
+### Playwright concurrency
 
-Archive lookups use Playwright browser automation (skills in
-`.claude/skills/`). The Playwright MCP server runs a **single browser
-session**, so only one agent can use Playwright at a time.
+Most archive skills (12/18) now use HTTP APIs and don't need a browser.
+For the remaining browser-dependent archives (FamilySearch, MyHeritage,
+erfgoed-s-hertogenbosch, het-utrechts-archief, rhc-rijnstreek), use the
+`browser-researcher` subagent (`.claude/agents/browser-researcher.md`).
 
-A PreToolUse/PostToolUse hook (`.claude/hooks/playwright-lock.sh`)
-automatically serializes Playwright access: when one agent holds the
-lock, others wait up to 25 seconds before timing out. Stale locks
-from crashed agents expire after 5 minutes. This means multiple
-sub-agents **can** safely attempt Playwright calls — they will queue
-rather than collide. No manual coordination needed.
+**Each `browser-researcher` spawn gets its own isolated Playwright
+browser** via inline `mcpServers`. Multiple instances run in parallel
+without locking or contention.
 
 Options for parallel research:
 
-- **Multiple agents, all using Playwright**: each agent calls Playwright
-  normally; the lock ensures only one browser operation runs at a time
-  while others wait their turn
-- **Non-Playwright agents**: use sub-agents for analysis, cross-validation,
-  and GEDCOM parsing (no browser needed) while browser-using agents
-  take turns automatically via the lock
+- **`browser-researcher` subagents** (preferred): each gets its own
+  browser via inline MCP — true parallelism, no lock needed
+- **Separate `claude` CLI instances**: each process spawns its own MCP
+  servers — also parallel, no lock needed
+- **Main session's shared Playwright plugin**: serialized by the
+  `playwright-lock.sh` hook. Use for quick one-off browser lookups
+  from the main session; avoid for parallel sub-agent work
+- **Non-browser agents**: use for analysis, GEDCOM parsing, and
+  cross-validation — no browser overhead
 
 ### Locking for concurrent agents
 
