@@ -20,11 +20,14 @@ CLAUDE.local.md
 .claude/scheduled_tasks.lock
 
 # Personal anchor files
-OPTIMIZATION.md
+OPTIMIZATION*.md
 
 # Browser automation logs
 .playwright-mcp/
 .barebrowse/
+
+# Research images (scans, photos)
+*.png
 
 # Archives
 *.zip
