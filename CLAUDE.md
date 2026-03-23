@@ -72,7 +72,7 @@ See `/fan-chart` skill for details.
 **Default approach:** When working on any family line, harden (verify)
 existing data first before trying to extend further back. This doesn't
 block exploration — it establishes how solid each node is so you know
-where proven facts end and speculation begins. See `/harden-line` skill.
+where proven facts end and speculation begins. See `/harden` skill.
 
 Researching means determining the right data sources to check based on
 the time period and location of the person, in order of logical priority.

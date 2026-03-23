@@ -126,7 +126,7 @@ You are running autonomous research session CYCLE_NUM.
 Research items from `private/research/RESEARCH_QUEUE.md`. Pick the highest-priority
 QUEUED item and investigate it thoroughly.
 
-Read and follow the research-loop skill at `.claude/skills/research-loop.md`.
+Read and follow the research skill at `.claude/skills/research/SKILL.md`.
 Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
 
 1. **Assess** — read the RESEARCH_QUEUE item for context: people IDs, current data
@@ -143,7 +143,7 @@ Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
    - Add source citations (SOUR records) with archive references
    - Add newly discovered parents as INDI+FAM records
    - CRITICAL: check highest existing INDI/FAM/SOUR IDs first to avoid
-     collisions (see research-loop skill for the exact commands)
+     collisions (see research skill for the exact commands)
    - Only apply Tier A/B evidence (official archive records)
    - For Tier C/D findings, document but do NOT edit the GEDCOM
 
@@ -157,7 +157,7 @@ Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
   FIRST to see what's been done and avoid duplicate work.
 - Pick a QUEUED item — don't repeat IN_PROGRESS or DONE items unless continuing.
 - Each cycle must make progress on the queue item (new lookups, new findings).
-- Run the GEDCOM validation script after edits (see research-loop skill).
+- Run the GEDCOM validation script after edits (see research skill).
 - **Flag missing datasources:** if you identify a relevant archive or database
   that has no skill in `.claude/skills/`, note it in your findings. Examples:
   a military database for a soldier ancestor, a regional archive for a new

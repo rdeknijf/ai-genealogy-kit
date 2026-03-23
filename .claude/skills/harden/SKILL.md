@@ -1,5 +1,5 @@
 ---
-name: harden-line
+name: harden
 description: |
   Systematically verify ("harden") a family line by checking every person
   against official archive records. Hardening means turning unverified tree
@@ -8,7 +8,7 @@ description: |
   the default first step before extending or exploring. Triggers on:
   "harden the line", "verify the X line", "check this branch",
   "research the X family", "work on the X line", "what do we know about X",
-  "/harden-line", or any request to investigate a family branch. Also use
+  "/harden", or any request to investigate a family branch. Also use
   when the user asks to extend a line — harden what exists first, then
   explore beyond.
 ---
@@ -43,7 +43,7 @@ For each person, try to find official records for:
 4. **Parent-child link** — confirmed by the person appearing as child in
    a parent's record OR as parent in their own child's record
 
-Cross-validation catches errors: age at marriage + marriage year ≈ birth
+Cross-validation catches errors: age at marriage + marriage year = birth
 year. Father's name in birth record = husband in parents' marriage. These
 consistency checks matter more than any single record.
 
@@ -56,7 +56,7 @@ The type of records available depends on the time period and location:
 
 - **1811+** (Netherlands) — civil registry (burgerlijke stand): birth,
   marriage, death certificates. Best coverage, most structured.
-- **1650–1811** (Netherlands) — church records (DTB: dopen, trouwen,
+- **1650-1811** (Netherlands) — church records (DTB: dopen, trouwen,
   begraven), notarial acts, tax rolls. Coverage varies by parish.
 - **Pre-1650** — sporadic. Tax records, court proceedings, guild records,
   land transfers. Individual records may be the only evidence.
@@ -94,16 +94,16 @@ a. **Search official archives** — determine the right sources based on
    databases), tell the user and note it in FINDINGS.md — missing
    datasources are important to flag so they can be onboarded.
 b. **Cross-validate** — check internal consistency across records
-c. **Document** — write findings to `research/private/research/FINDINGS.md` with tier and
+c. **Document** — write findings to `private/research/FINDINGS.md` with tier and
    source reference
 d. **Flag discrepancies** — if a record contradicts the GEDCOM, flag it
    clearly for user review
 
 ### 4. Apply verified data
 
-- Tier A/B findings → edit GEDCOM with source citation (after user review)
-- Tier C findings → flag in private/research/FINDINGS.md
-- Discrepancies → discuss with user before any edit
+- Tier A/B findings -> edit GEDCOM with source citation (after user review)
+- Tier C findings -> flag in private/research/FINDINGS.md
+- Discrepancies -> discuss with user before any edit
 
 ### 5. Report the hardening status
 
@@ -112,9 +112,9 @@ After the pass, produce a summary table:
 ```
 | Gen | Person | Birth | Marriage | Death | Parent link | Status |
 |-----|--------|-------|----------|-------|-------------|--------|
-| 1   | Name   | ✅ B  | ✅ B     | ✅ B  | ✅ B        | HARD   |
-| 2   | Name   | ✅ B  | n/a      | ✅ B  | ✅ B        | HARD   |
-| 3   | Name   | ❌    | ❌       | ❌    | ❌          | SOFT   |
+| 1   | Name   | B     | B        | B     | B           | HARD   |
+| 2   | Name   | B     | n/a      | B     | B           | HARD   |
+| 3   | Name   | -     | -        | -     | -           | SOFT   |
 ```
 
 - **HARD** — all available record types verified at Tier A/B
@@ -129,7 +129,7 @@ A person can be HARD without a marriage record.
 
 Each person's verification is independent. Use sub-agents where possible,
 but respect the Playwright concurrency constraint (one browser session).
-Non-browser work (GEDCOM parsing, cross-validation, private/research/FINDINGS.md writing)
+Non-browser work (GEDCOM parsing, cross-validation, FINDINGS.md writing)
 can run in parallel with browser lookups.
 
 ## After hardening
@@ -137,12 +137,12 @@ can run in parallel with browser lookups.
 Once the hardening pass is complete, the status table shows where to
 focus next:
 
-- **SOFT nodes** at the end of a line → these are the brick wall. Explore
+- **SOFT nodes** at the end of a line -> these are the brick wall. Explore
   beyond them, but clearly label any new finds as speculative until
   verified.
-- **PARTIAL nodes** in the middle → these are verification gaps. Fill
+- **PARTIAL nodes** in the middle -> these are verification gaps. Fill
   them to strengthen the chain.
-- **Discrepancies** → resolve these before extending. A wrong parent-child
+- **Discrepancies** -> resolve these before extending. A wrong parent-child
   link means everything above it may be fiction.
 
 If data source lookups were slow during hardening, consider running
