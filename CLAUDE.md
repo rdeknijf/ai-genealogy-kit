@@ -51,6 +51,7 @@ Project-local skills exist for each source — see `.claude/skills/`.
 - Use web search to find indexed records, then verify with primary sources
 - Cross-reference multiple independent sources before flagging changes
 - Track all findings in `private/research/FINDINGS.md` with tier and status
+- Check `private/research/RESEARCH_QUEUE.md` for prioritized research leads beyond standard hardening
 - Keep notes on unresolved questions and research leads
 
 ### Fan Chart — Research Verification Status
@@ -77,6 +78,22 @@ Researching means determining the right data sources to check based on
 the time period and location of the person, in order of logical priority.
 Data source skills exist in `.claude/skills/` — use `/onboard-datasource`
 to create new ones, `/improve-datasource` to make existing ones faster.
+
+### Flag missing datasources (MANDATORY)
+
+During research, if you identify a relevant data source that has no
+skill in `.claude/skills/` — **tell the user and note it**. This includes:
+
+- An archive for a region/country with no existing skill
+- A specialized record type (military, notarial, guild, colonial) that
+  a different database covers better than what we have
+- A database mentioned in `research/DATA_SOURCES.md` that would help
+  but has no skill yet (e.g., Militieregisters.nl, NIMH, KNIL records)
+- A source discovered during research that isn't in DATA_SOURCES.md at all
+
+When this happens: (1) mention it to the user in your output, (2) add a
+note in `private/research/FINDINGS.md` under the relevant finding, and
+(3) if the source would be broadly useful, suggest onboarding it.
 
 When systematically verifying a line (patrilineal, matrilineal, or any
 branch), follow this workflow:

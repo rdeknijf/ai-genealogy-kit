@@ -46,3 +46,5 @@ Important:
 - Follow the confidence tier system (A/B/C/D) from FINDINGS.md
 - Include archive references for all findings
 - Report negative results too ("no records found for X in Y")
+- If you discover a relevant datasource with no skill in `.claude/skills/`,
+  mention it in your output (name, URL, why it's relevant)
