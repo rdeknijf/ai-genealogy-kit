@@ -1,25 +1,45 @@
 ---
-name: research-loop
+name: research
 description: |
-  Run an autonomous genealogy research cycle: assess the GEDCOM tree, find
+  Run autonomous genealogy research cycles: assess the GEDCOM tree, find
   the highest-value gaps, look up records via archive skills, apply
   corrections, and document findings. Works outward from the root individual,
   prioritizing closer generations first. Use this skill whenever the user
-  wants autonomous research done on the tree — "do some research", "harden
-  lines", "fill gaps", "explore edges", "work on the tree for a while",
-  "/research-loop", or any open-ended request to improve the family tree
-  without a specific person or line in mind. Also use when the user sets
-  up a /loop for recurring research. Unlike /harden-line (which focuses
-  on ONE specific line), this skill picks the best targets across ALL
-  lines and maximizes impact per cycle.
+  wants autonomous research done on the tree — "do some research", "fill
+  gaps", "explore edges", "work on the tree for a while", "/research", or
+  any open-ended request to improve the family tree without a specific
+  person or line in mind. Also use when the user sets up a /loop for
+  recurring research. Unlike /harden (which focuses on ONE specific line),
+  this skill picks the best targets across ALL lines and maximizes impact
+  per cycle.
+
+  Supports an optional budget argument to keep running cycles until a usage
+  ceiling is hit. E.g. "/research 40% session" or "/research 5% weekly".
+  Without a budget, runs a single cycle.
 ---
 
-# Research Loop
+# Research
 
 An autonomous research cycle that assesses the tree state, identifies
 the highest-value work, performs archive lookups, applies corrections,
 and documents everything. Each cycle is self-contained and produces
 measurable progress.
+
+## Arguments
+
+This skill accepts an optional **budget** argument. If provided, it runs
+multiple cycles until the budget ceiling is reached. If omitted, it runs
+a single cycle.
+
+**Budget formats:**
+
+- `/research` — single cycle
+- `/research 40% session` — keep going until 40% more of the 5h block is used
+- `/research 5% weekly` — keep going until 5% more of the 7d block is used
+- `/research 40% session 5% weekly` — stop on whichever ceiling hits first
+
+Parse patterns: `N% session`, `session N%`, `Ns`, `sN` for session budget;
+`N% weekly`, `weekly N%`, `Nw`, `wN` for weekly budget.
 
 ## Prerequisites
 
@@ -30,9 +50,46 @@ Before starting, check project configuration for:
 - **GEDCOM path** — the working GEDCOM file location
 - **Findings file** — where research findings are documented
 - **Available archive skills** — check `.claude/skills/` for data source
-  skills (e.g., wiewaswie.md, openarchieven.md, familysearch.md)
+  skills (e.g., wiewaswie, openarchieven, familysearch)
 - **Confidence tiers** — the project's evidence classification system
   (usually defined in CLAUDE.md or the findings file header)
+
+## Budget mode startup
+
+If a budget was specified:
+
+### Inhibit system sleep
+
+```bash
+systemd-inhibit --what=sleep:idle --who="Claude Code" --why="research loop" --mode=block sleep infinity &
+INHIBIT_PID=$!
+```
+
+If `systemd-inhibit` isn't available, warn the user that the machine
+might sleep mid-research.
+
+### Read current usage and calculate ceilings
+
+```bash
+cat ~/.cache/ccstatusline/usage.json
+```
+
+The file contains `sessionUsage` and `weeklyUsage` as percentages (0-100).
+Calculate ceilings:
+
+- `sessionCeiling = current sessionUsage + requested session budget`
+- `weeklyCeiling = current weeklyUsage + requested weekly budget`
+
+Cap at 100. Report the plan before starting:
+
+```
+Budget research starting:
+  Session: 15.0% now, ceiling 55.0% (budget: 40%)
+  Weekly:  38.0% now, ceiling 43.0% (budget: 5%)
+  Stopping on whichever is hit first.
+```
+
+If the cache file doesn't exist or can't be read, tell the user and stop.
 
 ## Cycle structure
 
@@ -103,7 +160,7 @@ doesn't need to switch between different search interfaces.
 
 ```
 You are a genealogy research agent. Perform archive lookups.
-Read the skill at `.claude/skills/<data-source>.md` first.
+Read the skill at `.claude/skills/<data-source>/SKILL.md` first.
 
 Do these lookups SEQUENTIALLY:
 
@@ -185,13 +242,38 @@ After all edits, run a quick integrity check:
 ```bash
 python scripts/gedcom_query.py validate
 ```
-print(f'Duplicate source IDs: {set(src_dups) if src_dups else "none"}')
-print(f'Trailer present: {"0 TRLR" in content}')
-```
+
+## Budget mode: between cycles
+
+After each cycle completes, if running in budget mode:
+
+1. **Check budget** — read `~/.cache/ccstatusline/usage.json` and compare
+   against ceilings. If either tracked metric is at or above its ceiling,
+   stop (don't start a new cycle).
+
+2. **Report status** — briefly log where usage stands:
+   ```
+   Cycle N complete (session: 23.4% / 55.0%, weekly: 39.1% / 43.0%)
+   ```
+
+3. **Loop** — start the next cycle from Phase 1.
+
+Don't cut a cycle short even if usage might exceed the ceiling mid-cycle —
+the cache updates lag by ~3 minutes anyway, and partially applied research
+is worse than finishing cleanly.
+
+## Budget mode: stopping
+
+When a ceiling is reached (or both):
+
+- Finish the current cycle completely (all 4 phases)
+- Kill the sleep inhibitor: `kill $INHIBIT_PID 2>/dev/null`
+- Report final usage vs starting usage
+- Summarize what was accomplished across all cycles
 
 ## Summarize
 
-End each cycle with a brief summary:
+End each cycle (or the full budget run) with a brief summary:
 
 - Findings documented (numbers and descriptions)
 - GEDCOM corrections applied
@@ -258,3 +340,12 @@ Marriage records noting child legitimization ("wettiging", etc.) mean
 the couple had children before marrying. Document this — it affects
 family chronology and may explain birth records under the mother's
 maiden name.
+
+### Usage cache staleness (budget mode)
+
+The `~/.cache/ccstatusline/usage.json` file is updated by an external
+process roughly every 180 seconds. If it can't be read between cycles,
+log a warning but continue for one more cycle. If it fails twice in a
+row, stop and tell the user. Other Claude sessions consume the same
+budget — if usage jumps unexpectedly, that's fine, just stop at the
+ceiling.

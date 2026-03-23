@@ -1,22 +1,27 @@
 ---
-name: research-runner
+name: research-unattended
 description: |
-  Start and babysit autonomous genealogy research sessions. The runner script
-  launches sequential `claude -p` sessions that each do 2-3 research cycles
-  with fresh context, persisting state in GEDCOM + FINDINGS.md between sessions.
-  This skill manages the full lifecycle: starting the runner, monitoring it,
-  restarting on crashes, graceful stopping, and consolidating results.
+  Start and babysit autonomous genealogy research sessions running in
+  separate background processes. The runner script launches sequential
+  `claude -p` sessions that each do 2-3 research cycles with fresh context,
+  persisting state in GEDCOM + FINDINGS.md between sessions. This skill
+  manages the full lifecycle: starting the runner, monitoring it, restarting
+  on crashes, graceful stopping, and consolidating results.
   Use when: "start research", "run research for a while", "autonomous research",
-  "babysit research", "research runner", "/research-runner", or any request to
-  run research unattended. Also use when the user says "keep researching" or
-  "do research until I stop you".
+  "babysit research", "unattended research", "/research-unattended", or any
+  request to run research unattended. Also use when the user says "keep
+  researching" or "do research until I stop you".
 ---
 
-# Research Runner
+# Research (Unattended)
 
 Run autonomous genealogy research sessions with a babysitter pattern: a
 background script does the research, and you (the Claude session) monitor
 it, restart on crashes, and consolidate when done.
+
+Unlike `/research` (which runs cycles in the current session), this skill
+launches **separate background processes** that survive context limits
+and can run for hours unattended.
 
 ## Architecture
 
