@@ -119,22 +119,24 @@ fi
 
 # --- The prompt sent to each session ---
 read -r -d '' RESEARCH_PROMPT << 'PROMPT' || true
-You are running autonomous overnight research session CYCLE_NUM.
+You are running autonomous research session CYCLE_NUM.
 
 ## Your task
 
-Read and follow the research-loop skill at `.claude/skills/research-loop.md`.
-Run 2-3 full research cycles. Each cycle has 4 phases:
+Research items from `private/research/RESEARCH_QUEUE.md`. Pick the highest-priority
+QUEUED item and investigate it thoroughly.
 
-1. **Assess** — parse `private/tree.ged`, trace ancestors from the children:
-   Freya (I501635) and Balder (I501886). This covers both sides: De Knijf/Peters
-   (father) and Van der Kant/Brands (mother). Find gaps (missing dates, missing
-   sources, missing parents). Prioritize gen 4-6 (great-grandparents and beyond
-   from the kids' perspective). Skip people born after 1916 (privacy period).
+Read and follow the research-loop skill at `.claude/skills/research-loop.md`.
+Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
+
+1. **Assess** — read the RESEARCH_QUEUE item for context: people IDs, current data
+   tier, research goals, and where to look. Parse `private/tree.ged` to get the
+   current GEDCOM data for those persons. Understand what's known vs unknown.
 
 2. **Lookup** — search archives using the skills in `.claude/skills/`
    (wiewaswie.md, openarchieven.md, gelders-archief.md, etc.). Use sub-agents
-   for parallel lookups. Target birth, marriage, and death records.
+   for parallel lookups. Follow the "Where to look" guidance in the queue item.
+   Also use web search for specialized sources.
 
 3. **Apply** — edit `private/tree.ged` directly:
    - Add/correct dates and places from official records
@@ -143,17 +145,27 @@ Run 2-3 full research cycles. Each cycle has 4 phases:
    - CRITICAL: check highest existing INDI/FAM/SOUR IDs first to avoid
      collisions (see research-loop skill for the exact commands)
    - Only apply Tier A/B evidence (official archive records)
+   - For Tier C/D findings, document but do NOT edit the GEDCOM
 
 4. **Document** — append findings to `private/research/FINDINGS.md` with
    finding number, person ID, tier, status, evidence, and archive refs.
+   Update the queue item's status in RESEARCH_QUEUE.md (QUEUED → IN_PROGRESS → DONE).
 
 ## Rules
 
-- Read `private/research/FINDINGS.md` FIRST to see recent entries and avoid
-  duplicate work. Previous overnight sessions already ran.
-- Each cycle must target DIFFERENT persons than prior cycles in this session.
+- Read `private/research/FINDINGS.md` AND `private/research/RESEARCH_QUEUE.md`
+  FIRST to see what's been done and avoid duplicate work.
+- Pick a QUEUED item — don't repeat IN_PROGRESS or DONE items unless continuing.
+- Each cycle must make progress on the queue item (new lookups, new findings).
 - Run the GEDCOM validation script after edits (see research-loop skill).
-- End with a summary: findings documented, GEDCOM changes applied, what's next.
+- **Flag missing datasources:** if you identify a relevant archive or database
+  that has no skill in `.claude/skills/`, note it in your findings. Examples:
+  a military database for a soldier ancestor, a regional archive for a new
+  region, or a specialized collection (KNIL, notarial, guild records). Include
+  the datasource name, URL if known, and why it would help.
+- End with a summary: queue item worked on, findings documented, GEDCOM changes
+  applied, whether the item is DONE or needs more work, and any missing
+  datasources discovered.
 PROMPT
 
 # --- Main loop ---
@@ -185,13 +197,14 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     # Launch claude -p with the research prompt
     # Unset session env vars to avoid "cannot nest inside another session" error
     # timeout kills hung sessions (e.g. stuck sub-agents or browser calls)
+    exit_code=0
     timeout "$SESSION_TIMEOUT" \
         env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
         claude -p "$prompt" \
         --max-turns "$MAX_TURNS" \
         --output-format text \
-        > "$logfile" 2>&1
-    exit_code=$?
+        > "$logfile" 2>&1 \
+        || exit_code=$?
     if [[ $exit_code -eq 124 ]]; then
         log "Session $session_num TIMED OUT after $SESSION_TIMEOUT"
     fi

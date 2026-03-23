@@ -156,10 +156,19 @@ Legend:
 - **Login:** No
 - **Relevance:** MEDIUM. Relevant if any family lines pass through the Nijmegen area.
 
+### Drents Archief (Drenthe Provincial Archive)
+
+- **URL:** <https://www.drentsarchief.nl/>
+- **Contains:** 6.7 million person records for Drenthe. Civil registration (1811-1974), DTB church records (1600-1811), population registers, notarial records (1810-1915), and uniquely the Maatschappij van Weldadigheid bedelaarskolonie (beggar colony) registers from Veenhuizen and Frederiksoord (1822-1866).
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/drents-archief.md` — Memorix Genealogy REST API
+- **Relevance:** MEDIUM. Not in OpenArchieven. Relevant for Drenthe ancestors and bedelaarskolonie records (Christiaan Taks).
+
 ### Erfgoedcentrum Achterhoek en Liemers (ECAL)
 
 - **URL:** <https://www.ecal.nu/>
-- **Contains:** Archives for eastern Gelderland municipalities (Aalten, Berkelland, Bronckhorst, Doetinchem, Montferland, Oost Gelre, Oude IJsselstreek, Winterswijk). Archives, image collections, books, old newspapers.
+- **Contains:** Archives for eastern Gelderland municipalities (Aalten, Berkelland, Bronckhorst, Doetinchem, Montferland, Oost Gelre, Oude IJsselstreek, Winterswijk). Archives, image collections, books, old newspapers. DTB/BS records flow through Gelders Archief to WieWasWie/OpenArchieven. Doesburg garrison records NOT digitized (physical visit only).
 - **Cost:** Free
 - **Login:** No
 - **Relevance:** LOW-MEDIUM. Only relevant if family lines extend into eastern Gelderland (Achterhoek).
@@ -187,18 +196,20 @@ Legend:
 ### Nederlands Instituut voor Militaire Historie (NIMH)
 
 - **URL:** <https://www.nimh.nl/>
-- **Contains:** Military-historical collections from the Eighty Years' War to present. Personal files of the Royal Navy (Koninklijke Marine). Library with 70,000+ books. Growing online image database.
+- **Contains:** Military-historical collections from the Eighty Years' War to present. Personal files of the Royal Navy (Koninklijke Marine). Library with 70,000+ books. Growing online image database. 178,897 indexed records via OpenArchieven (Stamboeken, Persoonskaarten, POW files, decorations).
 - **Cost:** Free (visit or email inquiry)
 - **Login:** No
+- **Skill:** `.claude/skills/nimh.md` — OpenArchieven API (`archive_code=nim`)
 - **Relevance:** HIGH if any ancestors served in the military or navy. Contact: nimh@mindef.nl
 
 ### Militieregisters.nl (Militia Records)
 
-- **URL:** <https://militieregisters.nl/>
-- **Contains:** Conscription records for all Dutch males aged 18+ between ~1811-1940. Name, date/place of birth, occupation, parents' names, physical description, reason for exemption, regiment assigned.
+- **URL:** Domain defunct. Data available via OpenArchieven.
+- **Contains:** Conscription records for all Dutch males aged 18+ between ~1811-1940. Name, date/place of birth, occupation, parents' names, physical description, reason for exemption, regiment assigned. 2.4 million indexed records across 20 archives.
 - **Cost:** Free
 - **Login:** No
-- **Relevance:** VERY HIGH. All male ancestors in the 1811-1940 period should appear here. Excellent for finding parents' names and physical descriptions. Also searchable via OpenArchieven (24.7M records) and WieWasWie.
+- **Skill:** `.claude/skills/militieregisters.md` — OpenArchieven API (`sourcetype=Militieregisters`)
+- **Relevance:** VERY HIGH. All male ancestors in the 1811-1940 period should appear here. Excellent for finding parents' names and physical descriptions. Note: geographic gaps (no Zeeland, Groningen, Drenthe, Overijssel, Limburg).
 
 ### Nationaal Archief - Army Service Records
 
@@ -207,6 +218,24 @@ Legend:
 - **Cost:** Free (on FamilySearch)
 - **Login:** FamilySearch account (free)
 - **Relevance:** HIGH for ancestors who actually served (rather than just being conscripted).
+
+### VOC Opvarenden (Dutch East India Company Crew)
+
+- **URL:** <https://service.archief.nl/hub3/api/nt/nt00444> (API)
+- **Contains:** 853,785 crew records from VOC qualified muster rolls (1699-1794). Name, origin, rank, ship, fate (died/returned/deserted), service dates, VOC chamber, links to original scans.
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/voc-opvarenden.md` — NA HUB3 JSON API
+- **Relevance:** HIGH. Multiple Knijf/Knijff sailed as VOC soldiers/sailors. Daniel Pieterse Knijf from Woerden (1704). Note: `vocsite.nl` is ships only, `vocopvarenden.nationaalarchief.nl` is defunct.
+
+### SSNE — Scotland's Soldiers and the Dutch Republic
+
+- **URL:** <https://www.st-andrews.ac.uk/history/ssne/>
+- **Contains:** Records of Scottish soldiers and families who served in the Dutch Republic's military (~1570-1782). Scots-Dutch Brigade records. ~5,000 entries.
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/ssne.md` — URL-based search (no API, but curl-friendly)
+- **Relevance:** HIGH for Jeths/Jets line. Captain John Henderson (SSNE 8038), Lt-Col James Balfour (SSNE 8009), Col David Balfour (SSNE 8033) all found here.
 
 ---
 
