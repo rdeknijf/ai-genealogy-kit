@@ -89,7 +89,10 @@ a. **Search official archives** — determine the right sources based on
    time period and location, then look up birth, marriage, death records.
    Check `.claude/skills/` for existing data source skills. If the person
    is from a region or country with no skill, use `/onboard-datasource`
-   to create one first.
+   to create one first. **If you discover a relevant datasource that has
+   no skill** (e.g., military records, colonial archives, specialized
+   databases), tell the user and note it in FINDINGS.md — missing
+   datasources are important to flag so they can be onboarded.
 b. **Cross-validate** — check internal consistency across records
 c. **Document** — write findings to `research/private/research/FINDINGS.md` with tier and
    source reference

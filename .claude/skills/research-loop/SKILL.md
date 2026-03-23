@@ -75,30 +75,20 @@ lookup cycles on records that won't be publicly available online.
   GEDCOM event lacks SOUR) over new lookups
 - Persons with concrete open leads from previous research
 
-**Gap analysis script pattern:**
+**Use `scripts/gedcom_query.py`** for all GEDCOM queries:
 
-```python
-import re
-with open('<gedcom_path>', 'r', encoding='utf-8-sig') as f:
-    content = f.read()
-
-for tid, name in targets.items():
-    m = re.search(f'0 @{tid}@ INDI(.*?)(?=\n0 @)', content, re.DOTALL)
-    if not m: continue
-    block = m.group(1)
-    gaps = []
-    for evt in ['BIRT', 'DEAT']:
-        found_src = False
-        for evt_m in re.finditer(
-            f'\n1 {evt}(.*?)(?=\n1 [A-Z])', block, re.DOTALL
-        ):
-            if 'SOUR' in evt_m.group(1):
-                found_src = True
-        if not found_src:
-            gaps.append(f'no {evt.lower()} src')
-    status = ' | '.join(gaps) if gaps else 'fully sourced'
-    print(f'{tid} {name}: {status}')
+```bash
+python scripts/gedcom_query.py ids                    # highest IDs + counts
+python scripts/gedcom_query.py gaps I0100 I0200 ...   # gap analysis
+python scripts/gedcom_query.py person I0100            # full record
+python scripts/gedcom_query.py search "Kemmann"        # find by surname
+python scripts/gedcom_query.py validate                # integrity check
 ```
+
+**NEVER use `re.DOTALL` regex over the full GEDCOM content.** Patterns like
+`re.search('0 @I\d+@ INDI(.*?)(?=\n0 @)', content, re.DOTALL)` cause
+catastrophic backtracking on large files (100% CPU for 45+ minutes).
+Always use `gedcom_query.py` or line-by-line parsing instead.
 
 ### Phase 2: Lookup (8 min)
 
@@ -192,21 +182,9 @@ Add findings to the project's findings file with:
 
 After all edits, run a quick integrity check:
 
-```python
-import re
-with open('<gedcom_path>', 'r', encoding='utf-8-sig') as f:
-    content = f.read()
-sids = re.findall(r'^0 @(S\d+)@ SOUR', content, re.MULTILINE)
-src_dups = [s for s in sids if sids.count(s) > 1]
-iids = re.findall(r'^0 @(I\d+)@ INDI', content, re.MULTILINE)
-indi_dups = [i for i in set(iids) if iids.count(i) > 1]
-fids = re.findall(r'^0 @(F\d+)@ FAM', content, re.MULTILINE)
-fam_dups = [f for f in set(fids) if fids.count(f) > 1]
-print(f'Individuals: {len(iids)}')
-print(f'Families: {len(fids)}')
-print(f'Sources: {len(sids)}')
-print(f'Duplicate INDI IDs: {indi_dups if indi_dups else "none"}')
-print(f'Duplicate FAM IDs: {fam_dups if fam_dups else "none"}')
+```bash
+python scripts/gedcom_query.py validate
+```
 print(f'Duplicate source IDs: {set(src_dups) if src_dups else "none"}')
 print(f'Trailer present: {"0 TRLR" in content}')
 ```
@@ -219,6 +197,9 @@ End each cycle with a brief summary:
 - GEDCOM corrections applied
 - Stats delta (sources, individuals, families)
 - Remaining open leads for the next cycle
+- **Missing datasources** — any relevant archives or databases discovered
+  during research that have no skill in `.claude/skills/` (include name,
+  URL, and why it would help)
 
 ## Common pitfalls
 
