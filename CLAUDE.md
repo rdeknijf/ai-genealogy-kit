@@ -52,6 +52,7 @@ Project-local skills exist for each source — see `.claude/skills/`.
 - Cross-reference multiple independent sources before flagging changes
 - Track all findings in `private/research/FINDINGS.md` with tier and status
 - Check `private/research/RESEARCH_QUEUE.md` for prioritized research leads beyond standard hardening
+- Check `private/research/HUMAN_ACTIONS.md` for things only Rutger can do (archive visits, subscriptions, family questions) — never duplicate these as AI tasks
 - Keep notes on unresolved questions and research leads
 
 ### Fan Chart — Research Verification Status

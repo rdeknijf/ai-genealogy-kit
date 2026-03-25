@@ -24,7 +24,7 @@ LOG_DIR="private/research/logs"
 SESSION_CEILING=80    # stop if 5h session usage exceeds this % (requires --usage-cache)
 WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this % (requires --usage-cache)
 MAX_SESSIONS=5        # default conservative; override with --sessions N
-MAX_TURNS=50          # turns per claude session (~2-3 research cycles)
+MAX_TURNS=75          # turns per claude session (~2-3 research cycles + summary)
 SESSION_TIMEOUT=90m   # wallclock timeout per session (kill if hung)
 DRY_RUN=false
 INHIBIT_PID=""
@@ -109,7 +109,7 @@ fi
 
 # Inhibit sleep
 if command -v systemd-inhibit &>/dev/null; then
-    systemd-inhibit --what=sleep:idle --who="overnight-research" \
+    systemd-inhibit --what=sleep --who="genealogy-research" \
         --why="genealogy research loop" --mode=block sleep infinity &
     INHIBIT_PID=$!
     log "Sleep inhibited (PID $INHIBIT_PID)"
@@ -121,13 +121,27 @@ fi
 read -r -d '' RESEARCH_PROMPT << 'PROMPT' || true
 You are running autonomous research session CYCLE_NUM.
 
+## TURN BUDGET — CRITICAL
+
+You have a HARD LIMIT of MAX_TURNS_VALUE tool-call turns. You CANNOT see
+the counter, so you must manage your own budget:
+
+- **Turns 1-10:** Assess (read queue, read GEDCOM, understand the task)
+- **Turns 11-50:** Lookup + Apply (archive searches, sub-agents, GEDCOM edits)
+- **Turns 51-60:** Document (write findings to FINDINGS.md, update queue status)
+- **Turns 61-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
+
+If you are deep in research at turn ~50, STOP looking up new things and
+start documenting + summarizing. An incomplete summary is far better than
+no summary at all. The next session will continue where you left off.
+
 ## Your task
 
-Research items from `private/research/RESEARCH_QUEUE.md`. Pick the highest-priority
-QUEUED item and investigate it thoroughly.
+Pick ONE highest-priority QUEUED item from `private/research/RESEARCH_QUEUE.md`
+and investigate it. Do NOT work on multiple queue items in a single session.
 
 Read and follow the research skill at `.claude/skills/research/SKILL.md`.
-Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
+Run 1-2 full research cycles. Each cycle has 4 phases:
 
 1. **Assess** — read the RESEARCH_QUEUE item for context: people IDs, current data
    tier, research goals, and where to look. Parse `private/tree.ged` to get the
@@ -155,7 +169,8 @@ Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
 
 - Read `private/research/FINDINGS.md` AND `private/research/RESEARCH_QUEUE.md`
   FIRST to see what's been done and avoid duplicate work.
-- Pick a QUEUED item — don't repeat IN_PROGRESS or DONE items unless continuing.
+- Pick ONE QUEUED item — don't work on multiple items per session.
+- Continue an IN_PROGRESS item if it has open leads.
 - Each cycle must make progress on the queue item (new lookups, new findings).
 - Run the GEDCOM validation script after edits (see research skill).
 - **Flag missing datasources:** if you identify a relevant archive or database
@@ -163,14 +178,38 @@ Run 2-3 full research cycles per queue item. Each cycle has 4 phases:
   a military database for a soldier ancestor, a regional archive for a new
   region, or a specialized collection (KNIL, notarial, guild records). Include
   the datasource name, URL if known, and why it would help.
-- End with a summary: queue item worked on, findings documented, GEDCOM changes
-  applied, whether the item is DONE or needs more work, and any missing
-  datasources discovered.
+
+## OUTPUT SUMMARY — MANDATORY
+
+Your text output MUST end with a structured summary. This is the ONLY thing
+the runner script sees. Write it BEFORE any remaining GEDCOM edits if you
+are running low on turns. Format:
+
+## Session Summary — [RQ-NNN]: [title]
+
+### Queue item worked on
+**[RQ-NNN]** (Priority N, status)
+
+### Findings documented (N new)
+- **F-NNN**: one-line description
+- ...
+
+### GEDCOM changes applied
+- +N INDI, +N FAM, +N SOUR (or "no edits")
+- Validation: [clean / issues]
+
+### Status
+**[DONE / IN_PROGRESS / BLOCKED]** — [what remains]
+
+### Missing datasources
+[any flagged, or "none"]
 PROMPT
 
 # --- Main loop ---
 session_num=0
 total_findings=0
+prev_findings_count=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
+log "Starting findings count: $prev_findings_count"
 
 while [[ $session_num -lt $MAX_SESSIONS ]]; do
     session_num=$((session_num + 1))
@@ -191,8 +230,9 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     # Prepare log file
     logfile="$LOG_DIR/overnight-$(date '+%Y%m%d-%H%M%S')-session${session_num}.md"
 
-    # Substitute cycle number into prompt
+    # Substitute cycle number and max-turns into prompt
     prompt="${RESEARCH_PROMPT//CYCLE_NUM/$session_num}"
+    prompt="${prompt//MAX_TURNS_VALUE/$MAX_TURNS}"
 
     # Launch claude -p with the research prompt
     # Unset session env vars to avoid "cannot nest inside another session" error
@@ -211,16 +251,25 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
 
     log "Session $session_num complete. Log: $logfile"
 
-    # Count new findings (rough: grep for F-NNN patterns in the log)
-    new_findings=$({ grep -oP 'F-\d{1,4}' "$logfile" 2>/dev/null || true; } | wc -l)
+    # Count new findings from FINDINGS.md (authoritative) and session log (backup)
+    current_findings=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
+    if [[ -z "$prev_findings_count" ]]; then
+        # First session — can't diff, fall back to log grep
+        new_findings=$({ grep -oP 'F-\d{1,4}' "$logfile" 2>/dev/null || true; } | sort -u | wc -l)
+    else
+        new_findings=$((current_findings - prev_findings_count))
+        [[ $new_findings -lt 0 ]] && new_findings=0
+    fi
+    prev_findings_count="$current_findings"
     total_findings=$((total_findings + new_findings))
-    log "Findings referenced this session: $new_findings (total: $total_findings)"
+    log "New findings this session: $new_findings (total in FINDINGS.md: $current_findings)"
 
     # Brief cooldown to let usage cache update
     sleep 30
 done
 
+final_findings=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
 log "=== Overnight Research Complete ==="
 log "Sessions run: $session_num"
-log "Total findings referenced: $total_findings"
+log "New findings this run: $total_findings (FINDINGS.md total: $final_findings)"
 log "Logs: $LOG_DIR/overnight-*.md"

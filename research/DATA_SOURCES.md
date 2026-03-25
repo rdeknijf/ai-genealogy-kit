@@ -1,10 +1,14 @@
 # Comprehensive Dutch Genealogy Data Sources
 
-Last updated: 2026-03-15
+Last updated: 2026-03-24
 
 This document lists ALL known data sources for Dutch genealogy research beyond the
 basics already in use (OpenArchieven, WieWasWie, FamilySearch, Gelders Archief,
 Het Utrechts Archief, Alle Drenten, BHIC, MyHeritage).
+
+**BHIC now has a skill:** `.claude/skills/bhic/SKILL.md` — Memorix Genealogy REST
+API, 24.1M person records, ~50ms per query. Covers all North Brabant province
+including Schijndel, Nuland, Berlicum DTB and BS records.
 
 ## 0. MyHeritage (Read-Only Research Tool)
 
