@@ -1,7 +1,7 @@
 ---
 name: myheritage
 description: |
-  Search and browse MyHeritage via Playwright browser automation. Use this skill
+  Search and browse MyHeritage via playwright-cli browser automation. Use this skill
   when you need to: (1) check matches for a person — Smart Matches against other
   trees or Record Matches against historical records, (2) search MyHeritage
   SuperSearch for historical records across 39B entries, (3) browse connected
@@ -20,6 +20,38 @@ MyHeritage is used **read-only** as a secondary research tool — Gramps Web
 
 **Requires login** — credentials stored in `.env` as `MYHERITAGE_USER` and
 `MYHERITAGE_PASSWORD`.
+
+## Browser automation via playwright-cli
+
+All browser interaction uses `playwright-cli` via Bash with a named session:
+
+```bash
+# Open browser (once per session)
+playwright-cli -s=myheritage open
+
+# Navigate
+playwright-cli -s=myheritage goto "https://www.myheritage.com/research"
+
+# Get page snapshot (written to .playwright-cli/*.yml)
+playwright-cli -s=myheritage snapshot
+
+# Interact using refs from snapshot
+playwright-cli -s=myheritage fill <ref> "search text"
+playwright-cli -s=myheritage click <ref>
+
+# Run JavaScript (e.g., remove overlays)
+playwright-cli -s=myheritage run-code "document.querySelectorAll('.cookie_banner_overlay, .modal_overlay, #cookie_preferences_banner_root, #cookie_preferences_dialog_root').forEach(el => el.remove()); 'done'"
+
+# Save/load auth state for reuse across sessions
+playwright-cli -s=myheritage state-save .playwright-cli/myheritage-auth.json
+playwright-cli -s=myheritage state-load .playwright-cli/myheritage-auth.json
+
+# Close when done
+playwright-cli -s=myheritage close
+```
+
+**Important:** After each action that changes the page (click, fill+submit,
+goto), take a new `snapshot` to get updated refs. Refs change between snapshots.
 
 ## Setup
 
@@ -55,53 +87,60 @@ URLs below use `{SITE_ID}` as a placeholder — substitute your actual value.
 
 ## Login workflow
 
-MyHeritage requires authentication. The Playwright session persists cookies,
-so login is only needed once per browser session.
+MyHeritage requires authentication. The playwright-cli session persists
+cookies, so login is only needed once per browser session. Use
+`state-save`/`state-load` to persist auth across sessions.
 
 ### 1. Check if already logged in
 
-Navigate to any MyHeritage page:
-
+```bash
+playwright-cli -s=myheritage goto "https://www.myheritage.com/research"
+playwright-cli -s=myheritage snapshot
 ```
-browser_navigate → https://www.myheritage.com/research
-```
 
-If the snapshot shows a user name button with "Rekeningopties" in the header,
-you're logged in. Skip to the appropriate workflow below.
+Read the snapshot file. If it shows a user name button with "Rekeningopties"
+in the header, you're logged in. Skip to the appropriate workflow below.
 
 If it shows `button "Log in"`, proceed to step 2.
 
 ### 2. Remove cookie overlays
 
 MyHeritage has aggressive cookie banners that block interaction. Remove them
-with `browser_run_code` BEFORE trying to click anything:
+BEFORE trying to click anything:
 
-```javascript
-async (page) => {
-  await page.evaluate(() => {
-    ['cookie_preferences_banner_root', 'cookie_preferences_dialog_root'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.remove();
-    });
-    document.querySelectorAll('.cookie_banner_overlay, .modal_overlay').forEach(el => el.remove());
-  });
-  return 'Overlays removed';
-}
+```bash
+playwright-cli -s=myheritage run-code "['cookie_preferences_banner_root', 'cookie_preferences_dialog_root'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); }); document.querySelectorAll('.cookie_banner_overlay, .modal_overlay').forEach(el => el.remove()); 'Overlays removed'"
 ```
 
 ### 3. Log in
 
-Click the "Log in" button. A dialog appears with email and password fields:
+Take a snapshot to find the "Log in" button ref, then click it:
 
-- Fill `textbox "E-mailadres"` with `MYHERITAGE_USER` from `.env`
-- Fill `textbox "Wachtwoord"` with `MYHERITAGE_PASSWORD` from `.env`
-- Click `button "Inloggen"`
+```bash
+playwright-cli -s=myheritage snapshot
+playwright-cli -s=myheritage click <login-button-ref>
+playwright-cli -s=myheritage snapshot
+```
+
+A dialog appears with email and password fields. Find the refs and fill them:
+
+```bash
+playwright-cli -s=myheritage fill <email-ref> "$MYHERITAGE_USER"
+playwright-cli -s=myheritage fill <password-ref> "$MYHERITAGE_PASSWORD"
+playwright-cli -s=myheritage click <submit-ref>
+```
 
 **Important:** Read credentials from `.env` using the Read tool — do NOT
 hardcode them.
 
 After login, a banner may show "De grens van de stamboom is overschreden"
 (tree limit exceeded). This is normal on the Basic plan — ignore it.
+
+**Save auth state for reuse:**
+
+```bash
+playwright-cli -s=myheritage state-save .playwright-cli/myheritage-auth.json
+```
 
 ### 4. Ensure correct site
 
@@ -113,8 +152,8 @@ ensures the correct site is used.
 
 ### 1. Navigate to Discovery Hub
 
-```
-browser_navigate → https://www.myheritage.com/discovery-hub/{SITE_ID}/matches-by-people
+```bash
+playwright-cli -s=myheritage goto "https://www.myheritage.com/discovery-hub/{SITE_ID}/matches-by-people"
 ```
 
 This shows a paginated list of persons sorted by match value, with tabs:
@@ -134,8 +173,8 @@ Each person entry shows:
 Click the "Vind een persoon" (Find a person) button to search by name within
 the matches list. Alternatively, use the direct URL:
 
-```
-browser_navigate → https://www.myheritage.com/discovery-hub/{SITE_ID}/matches-for-person/{personId}
+```bash
+playwright-cli -s=myheritage goto "https://www.myheritage.com/discovery-hub/{SITE_ID}/matches-for-person/{personId}"
 ```
 
 Person IDs can be found from the matches list (in the href of each person's link).
@@ -168,8 +207,9 @@ Search 39 billion records across all categories.
 
 ### 1. Navigate to SuperSearch
 
-```
-browser_navigate → https://www.myheritage.com/research?s={SITE_ID}
+```bash
+playwright-cli -s=myheritage goto "https://www.myheritage.com/research?s={SITE_ID}"
+playwright-cli -s=myheritage snapshot
 ```
 
 ### 2. Fill the search form
@@ -181,6 +221,14 @@ browser_navigate → https://www.myheritage.com/research?s={SITE_ID}
 | Birth year | "Geboortejaar" | textbox |
 | Place | "Plaats" | textbox |
 
+Find refs in snapshot, then fill and submit:
+
+```bash
+playwright-cli -s=myheritage fill <firstname-ref> "Jan"
+playwright-cli -s=myheritage fill <lastname-ref> "de Knijf"
+playwright-cli -s=myheritage click <search-button-ref>
+```
+
 Click "Voeg details toe" (Add details) to expand additional fields:
 - Father, Mother, Partner (each with first name + last name)
 - Death year and place
@@ -188,8 +236,8 @@ Click "Voeg details toe" (Add details) to expand additional fields:
 
 ### 3. Submit and read results
 
-Click "Zoeken" (Search). Results are grouped by category with counts.
-Each result shows: person name, dates, place, collection name.
+Results are grouped by category with counts. Each result shows: person name,
+dates, place, collection name.
 
 ### 4. View a result
 
@@ -223,18 +271,16 @@ Each connected site has its own Site ID in the URL.
 
 To browse a connected site's tree:
 
-```
-browser_navigate → https://www.myheritage.com/family-trees/{site-slug}/{CONNECTED_SITE_ID}
+```bash
+playwright-cli -s=myheritage goto "https://www.myheritage.com/family-trees/{site-slug}/{CONNECTED_SITE_ID}"
 ```
 
 Connected sites with PremiumPlus plans may show more data than your own plan allows.
 
 ## Workflow D: Photo tools
 
-Navigate to the photo world:
-
-```
-browser_navigate → https://www.myheritage.com/photo-world/{SITE_ID}
+```bash
+playwright-cli -s=myheritage goto "https://www.myheritage.com/photo-world/{SITE_ID}"
 ```
 
 Available tools (limited free uses per day):

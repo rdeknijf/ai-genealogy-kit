@@ -1,7 +1,7 @@
 ---
 name: familysearch
 description: |
-  Search the FamilySearch historical records database via Playwright browser
+  Search the FamilySearch historical records database via playwright-cli browser
   automation. Use this skill when searching for genealogical records on
   FamilySearch.org — billions of birth, marriage, death, census, and other
   records worldwide. Triggers on: "search familysearch", "check familysearch",
@@ -18,6 +18,34 @@ census records, immigration records, and more.
 **Requires login** — credentials are stored in `.env` as `FAMILYSEARCH_USER`
 and `FAMILYSEARCH_PASSWORD`.
 
+## Browser automation via playwright-cli
+
+All browser interaction uses `playwright-cli` via Bash. Use a named session
+to keep the browser open across multiple commands:
+
+```bash
+# Open browser (once per session)
+playwright-cli -s=familysearch open
+
+# Navigate
+playwright-cli -s=familysearch goto "https://www.familysearch.org/en/search/"
+
+# Get page snapshot (returns file path)
+playwright-cli -s=familysearch snapshot
+# Read the snapshot file to find element refs
+cat .playwright-cli/<snapshot-file>.yml
+
+# Interact using refs from snapshot
+playwright-cli -s=familysearch fill <ref> "search text"
+playwright-cli -s=familysearch click <ref>
+
+# Close when done
+playwright-cli -s=familysearch close
+```
+
+**Important:** After each action that changes the page (click, fill+submit,
+goto), take a new snapshot to get updated refs. Refs change between snapshots.
+
 ## When to use FamilySearch vs other sources
 
 - **WieWasWie** — Dutch civil registry records with structured results
@@ -29,31 +57,41 @@ and `FAMILYSEARCH_PASSWORD`.
 
 ## Login workflow
 
-FamilySearch requires authentication. The Playwright session persists cookies,
-so login is only needed once per browser session.
+FamilySearch requires authentication. The playwright-cli session persists
+cookies, so login is only needed once per browser session. Use
+`state-save`/`state-load` to persist auth across sessions.
 
 ### 1. Check if already logged in
 
-Navigate to the search page and check for the account button in the header:
-
+```bash
+playwright-cli -s=familysearch goto "https://www.familysearch.org/en/search/"
+playwright-cli -s=familysearch snapshot
 ```
-browser_navigate → https://www.familysearch.org/en/search/
-```
 
-If the snapshot shows `button "Account: Rutger de Knijf"` in the header,
-you're already logged in. Skip to step 3.
+Read the snapshot file. If it shows `button "Account: Rutger de Knijf"` in
+the header, you're already logged in. Skip to step 3.
 
 ### 2. Log in (if needed)
 
-```
-browser_navigate → https://www.familysearch.org/en/
+```bash
+playwright-cli -s=familysearch goto "https://www.familysearch.org/en/"
+playwright-cli -s=familysearch snapshot
 ```
 
-Click "Sign In" button in the header. On the login page:
+Read the snapshot, find the "Sign In" button ref, then:
 
-- Fill "Username" with the value of `FAMILYSEARCH_USER` from `.env`
-- Fill "Password" with the value of `FAMILYSEARCH_PASSWORD` from `.env`
-- Click "Sign In" submit button
+```bash
+playwright-cli -s=familysearch click <sign-in-ref>
+playwright-cli -s=familysearch snapshot
+```
+
+On the login page, find the Username and Password field refs:
+
+```bash
+playwright-cli -s=familysearch fill <username-ref> "$FAMILYSEARCH_USER"
+playwright-cli -s=familysearch fill <password-ref> "$FAMILYSEARCH_PASSWORD"
+playwright-cli -s=familysearch click <submit-ref>
+```
 
 **Important:** Read credentials from `.env` using the Read tool — do NOT
 hardcode them. The password contains special characters (`!@%^`) and
@@ -64,12 +102,24 @@ Click "Continue" to proceed.
 
 If a cookie consent banner appears, click "Accept".
 
+**Save auth state for reuse:**
+
+```bash
+playwright-cli -s=familysearch state-save .playwright-cli/familysearch-auth.json
+```
+
+**Load saved auth in future sessions:**
+
+```bash
+playwright-cli -s=familysearch open
+playwright-cli -s=familysearch state-load .playwright-cli/familysearch-auth.json
+```
+
 ### 3. Search historical records
 
-Navigate to the search page:
-
-```
-browser_navigate → https://www.familysearch.org/en/search/
+```bash
+playwright-cli -s=familysearch goto "https://www.familysearch.org/en/search/"
+playwright-cli -s=familysearch snapshot
 ```
 
 The search form has these fields:
@@ -79,7 +129,7 @@ The search form has these fields:
 - **Birth Place** — combobox (type to search, e.g., "Netherlands" or city name)
 - **Birth Year** — textbox
 
-Click "Search" to submit.
+Find the refs in the snapshot, fill the fields, then click "Search".
 
 For more filters, click **"More Options"** which expands additional fields:
 
@@ -105,6 +155,10 @@ The search page has tabs for different record types:
 
 ### 5. Read search results
 
+```bash
+playwright-cli -s=familysearch snapshot
+```
+
 Results show a list with:
 
 - Person name
@@ -112,7 +166,7 @@ Results show a list with:
 - Location
 - Collection name
 
-Click a result to see the full record detail page.
+Find the ref for a result and click it to see the full record detail page.
 
 ### 6. Record detail page
 
@@ -139,8 +193,8 @@ To search within a specific collection (e.g., "Netherlands, Civil Registration")
 
 Alternatively, browse all collections:
 
-```
-browser_navigate → https://www.familysearch.org/en/search/collection/list
+```bash
+playwright-cli -s=familysearch goto "https://www.familysearch.org/en/search/collection/list"
 ```
 
 ### 8. Search by place
@@ -189,3 +243,4 @@ To find records for a specific location:
 - Some record images are restricted to viewing at FamilySearch Centers only
 - Wildcard searches: use `*` for partial name matching
 - For Dutch names, try both with and without prefixes (e.g., "de Knijf" and "Knijf")
+- Use `playwright-cli -s=familysearch screenshot` to capture record images

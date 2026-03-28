@@ -19,12 +19,27 @@ Montfoort, Oudewater, Reeuwijk, IJsselstein, and water boards.
 No login required for searching. Same Deventit Atlantis platform as Erfgoed
 's-Hertogenbosch.
 
+## Browser automation via playwright-cli
+
+All browser interaction uses `playwright-cli` via Bash with a named session:
+
+```bash
+playwright-cli -s=rhc open
+playwright-cli -s=rhc goto "https://archief.rhcrijnstreek.nl/zoeken.php?overzicht=alles"
+playwright-cli -s=rhc snapshot
+# Read .playwright-cli/*.yml to find refs, then interact
+playwright-cli -s=rhc fill <ref> "search text"
+playwright-cli -s=rhc click <ref>
+playwright-cli -s=rhc close
+```
+
 ## Workflow
 
 ### 1. Navigate to the search page
 
-```
-browser_navigate → https://archief.rhcrijnstreek.nl/zoeken.php?overzicht=alles
+```bash
+playwright-cli -s=rhc goto "https://archief.rhcrijnstreek.nl/zoeken.php?overzicht=alles"
+playwright-cli -s=rhc snapshot
 ```
 
 ### 2. Select the right collection
@@ -55,16 +70,17 @@ Key field:
 
 There is also a "Zoeken met spellingsvarianten" checkbox for fuzzy matching.
 
-The form uses POST with a CSRF token (`unique-token` hidden field). Playwright
-handles this automatically.
+The form uses POST with a CSRF token (`unique-token` hidden field). playwright-cli
+handles this automatically since it fills and submits in-browser.
 
 ### 4. Submit and read results
 
-Click the "Zoeken" button. Results appear in a table/list format.
+Find the "Zoeken" button ref in the snapshot and click it. Take a new snapshot
+to read results.
 
 ### 5. View record detail
 
-Click a result to see the full record. Person records show:
+Click a result ref to see the full record. Person records show:
 - Name, date, place
 - Role (Gedoopte, Vader, Moeder, etc.)
 - Archive reference (Toegang, Bron)
@@ -86,9 +102,9 @@ These work the same as in other Atlantis-platform archives.
 
 - **Same platform as Erfgoed 's-Hertogenbosch** — the Deventit Atlantis interface
   works identically. If you know how to use one, you know both.
-- **CSRF token** required for POST — Playwright handles this.
+- **CSRF token** required for POST — playwright-cli handles this (fills in-browser).
 - **jQuery Chosen** for autocomplete dropdowns.
-- **Cookie consent banner** on first visit.
+- **Cookie consent banner** on first visit — dismiss via `playwright-cli click`.
 
 ## Output format
 
