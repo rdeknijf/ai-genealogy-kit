@@ -43,3 +43,4 @@ scripts/apply_meta_corrections.py
 __pycache__/
 *.pyc
 .venv/
+.playwright-cli/

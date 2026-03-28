@@ -114,42 +114,94 @@ parallelize. Launch one agent per person, each tasked with looking up
 that person's birth/marriage/death records and returning structured
 findings with archive references.
 
-### Playwright concurrency
+### Browser automation via playwright-cli
 
 Most archive skills (12/18) now use HTTP APIs and don't need a browser.
 For the remaining browser-dependent archives (FamilySearch, MyHeritage,
-erfgoed-s-hertogenbosch, het-utrechts-archief, rhc-rijnstreek), use the
-`browser-researcher` subagent (`.claude/agents/browser-researcher.md`).
+erfgoed-s-hertogenbosch, rhc-rijnstreek), use `playwright-cli` via Bash.
 
-**Each `browser-researcher` spawn gets its own isolated Playwright
-browser** via inline `mcpServers`. Multiple instances run in parallel
-without locking or contention.
+**Named sessions** (`-s=familysearch`, `-s=myheritage`) allow unlimited
+parallel browsers without locking or contention.
 
 Options for parallel research:
 
-- **`browser-researcher` subagents** (preferred): each gets its own
-  browser via inline MCP — true parallelism, no lock needed
-- **Separate `claude` CLI instances**: each process spawns its own MCP
-  servers — also parallel, no lock needed
-- **Main session's shared Playwright plugin**: serialized by the
-  `playwright-lock.sh` hook. Use for quick one-off browser lookups
-  from the main session; avoid for parallel sub-agent work
+- **`browser-researcher` subagents** (preferred): each uses its own
+  named `playwright-cli` session — true parallelism, no lock needed
+- **Separate `claude` CLI instances**: each uses its own sessions
+- **Main session**: use `playwright-cli` directly for quick lookups
 - **Non-browser agents**: use for analysis, GEDCOM parsing, and
   cross-validation — no browser overhead
 
+Key `playwright-cli` features for research:
+- `state-save`/`state-load` — persist login sessions (FamilySearch, MyHeritage)
+- `run-code` — execute JavaScript (e.g., remove cookie overlays)
+- `screenshot` — capture document scans
+- Snapshots save to `.playwright-cli/*.yml` files (token-efficient)
+
 ### Locking for concurrent agents
 
-Three independent locks protect shared resources:
+Two independent locks protect shared resources:
 
 | Resource | Lock | Hook | Wait timeout |
 |----------|------|------|-------------|
 | `private/tree.ged` | `gedcom-tree-ged` | `.claude/hooks/file-lock.sh` | 5s |
 | `private/research/FINDINGS.md` | `research-findings` | `.claude/hooks/file-lock.sh` | 5s |
-| Playwright browser | `playwright-browser` | `.claude/hooks/playwright-lock.sh` | 25s |
 
 All locks use atomic `mkdir` in `/tmp/`, track ownership by session ID,
 and expire after 5 minutes (stale lock cleanup). No action needed — the
-hooks run automatically on Edit/Write and Playwright MCP tool calls.
+hooks run automatically on Edit/Write calls.
+
+Note: `playwright-cli` uses named sessions (`-s=name`) for parallelism —
+no browser lock needed.
+
+## Autonomous Research Rules
+
+These rules apply to research-runner sessions and any unattended research agents.
+
+### Persist findings immediately
+
+Write findings to `private/research/FINDINGS.md` and update `RESEARCH_QUEUE.md`
+after EACH research cycle, not at the end of the session. Sessions can hit max
+turns or context limits at any time — unwritten findings are permanently lost.
+
+### Worker limits and commit discipline
+
+- Maximum **3 concurrent** research worker subagents per runner session
+- Research workers must **never commit or push** — only the management agent
+  (research-runner or the human) may commit
+- Workers write to FINDINGS.md and RESEARCH_QUEUE.md only
+
+### No duplicate verification
+
+Before requesting human verification of an archive scan, check
+`private/research/FINDINGS.md` and verification records to confirm the scan
+has not already been verified. Never present the same scan twice.
+
+### Subagent tool awareness
+
+When spawning browser-research subagents, explicitly state that Playwright is
+available via `playwright-cli`. Subagents often forget they have browser access
+and fail on JavaScript-rendered archive pages.
+
+### Prefer API over browser
+
+Always prefer HTTP API access over Playwright browser automation — APIs are
+10-50x faster. Most archive skills (12/18+) already use APIs. When creating
+or updating datasource skills, check for API endpoints first. Only fall back
+to Playwright when no API exists.
+
+## Public vs Private Content
+
+The public repo (`ai-genealogy-kit`) must NEVER contain:
+
+- Person names, GEDCOM IDs, or family-specific data
+- Research queue items referencing specific people
+- Content from `private/research/` files
+- Family photos, scans, or documents
+
+When editing files in the public repo, review every line for accidental
+private content before committing. All binary files (images, PDFs, scans)
+must go through Git LFS in the private repo — never commit binaries directly.
 
 ## Goals
 
@@ -169,3 +221,6 @@ hooks run automatically on Edit/Write and Playwright MCP tool calls.
 - `research/DATA_SOURCES.md` — catalog of Dutch genealogy archives
 - `scripts/` — Python tools for GEDCOM analysis (`analyze_gedcom.py`) and visualization (`fan_chart.py`)
 - `.claude/skills/` — data source and research workflow skills
+
+All binary files in `private/` are tracked by Git LFS. Before committing
+any new binary (image, PDF, scan), verify LFS tracking with `git lfs track`.
