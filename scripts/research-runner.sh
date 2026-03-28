@@ -87,7 +87,7 @@ cleanup() {
 trap cleanup EXIT
 
 # --- Startup ---
-log "=== Overnight Research ==="
+log "=== Unattended Research ==="
 log "Max sessions: $MAX_SESSIONS, Max turns: $MAX_TURNS, Timeout: $SESSION_TIMEOUT"
 if has_usage_tracking; then
     log "Usage tracking: $USAGE_CACHE"
@@ -228,7 +228,7 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     fi
 
     # Prepare log file
-    logfile="$LOG_DIR/overnight-$(date '+%Y%m%d-%H%M%S')-session${session_num}.md"
+    logfile="$LOG_DIR/unattended-$(date '+%Y%m%d-%H%M%S')-session${session_num}.md"
 
     # Substitute cycle number and max-turns into prompt
     prompt="${RESEARCH_PROMPT//CYCLE_NUM/$session_num}"
@@ -269,7 +269,7 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
 done
 
 final_findings=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
-log "=== Overnight Research Complete ==="
+log "=== Unattended Research Complete ==="
 log "Sessions run: $session_num"
 log "New findings this run: $total_findings (FINDINGS.md total: $final_findings)"
-log "Logs: $LOG_DIR/overnight-*.md"
+log "Logs: $LOG_DIR/unattended-*.md"
