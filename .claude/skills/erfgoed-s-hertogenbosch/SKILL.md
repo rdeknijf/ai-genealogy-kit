@@ -23,12 +23,27 @@ No login required for searching and viewing records.
 
 The search portal is on a separate subdomain: `zoeken.erfgoedshertogenbosch.nl`.
 
+## Browser automation via playwright-cli
+
+All browser interaction uses `playwright-cli` via Bash with a named session:
+
+```bash
+playwright-cli -s=denbosch open
+playwright-cli -s=denbosch goto "<url>"
+playwright-cli -s=denbosch snapshot
+# Read .playwright-cli/*.yml to find refs, then interact
+playwright-cli -s=denbosch fill <ref> "search text"
+playwright-cli -s=denbosch click <ref>
+playwright-cli -s=denbosch close
+```
+
 ## Workflow
 
 ### 1. Navigate to person search
 
-```
-browser_navigate → https://zoeken.erfgoedshertogenbosch.nl/zoeken.php?zoeken[beschrijvingsgroepen][]=38089355
+```bash
+playwright-cli -s=denbosch goto "https://zoeken.erfgoedshertogenbosch.nl/zoeken.php?zoeken[beschrijvingsgroepen][]=38089355"
+playwright-cli -s=denbosch snapshot
 ```
 
 The `beschrijvingsgroepen` parameter pre-selects "Personen en locaties" which is
@@ -110,8 +125,8 @@ to narrow by source type:
 
 ## Quirks
 
-- **CSRF token**: The form requires a `unique-token` hidden field. Playwright
-  handles this automatically since it loads the page first.
+- **CSRF token**: The form requires a `unique-token` hidden field. playwright-cli
+  handles this automatically since it fills and submits in-browser.
 - **Autocomplete fields**: Rol, Plaats, Soort bron use jQuery Chosen dropdowns.
   Type the value and select from suggestions.
 - **Date format**: dd-mm-jjjj (day-month-year, 4-digit year).
