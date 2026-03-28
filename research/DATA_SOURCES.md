@@ -177,6 +177,15 @@ Legend:
 - **Login:** No
 - **Relevance:** LOW-MEDIUM. Only relevant if family lines extend into eastern Gelderland (Achterhoek).
 
+### Collectie Overijssel (formerly Historisch Centrum Overijssel / HCO)
+
+- **URL:** <https://collectieoverijssel.nl/>
+- **Contains:** 2M+ records with 7.2M person references for ALL Overijssel municipalities. Currently BS records only (Geboorte 1811+, Huwelijk 1811-1932, Overlijden 1811-1960). DTB church records (pre-1811) digitized as scans but NOT indexed by person name — indexing in progress. Covers Zwolle, Deventer, Kampen, Enschede, Almelo, Hengelo, Holten, Markelo, Goor, Rijssen, and all other Overijssel municipalities.
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/collectie-overijssel/` — OpenArchieven JSON API (archive_code=hco)
+- **Relevance:** HIGH. Primary archive for Overijssel province. Needed for Knopers (Holten), Brands/Van der Bent (Kampen), and other Overijssel lines.
+
 ### Collectie Gelderland
 
 - **URL:** <https://www.collectiegelderland.nl/>
