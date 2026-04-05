@@ -176,11 +176,13 @@ when they come from the same record. Use these patterns:
 #### Writing style
 
 - Write in the past tense for historical events, present for analysis
-- Address the reader directly when connecting to the audience
 - Include sensory/occupational details (what did this work feel like?)
 - Be honest about uncertainty — "we don't know" is better than speculation
 - Use `---` for em-dashes (Typst renders them correctly)
 - Historical context paragraphs: temporarily disable first-line-indent
+- **Apply the `/dutch-writing` skill** for Dutch prose — sentence case
+  headings, avoid je/jou/u direct address, no Anglo-centric comparisons,
+  no over-explaining Dutch concepts to Dutch readers
 
 ### 5. Compile
 

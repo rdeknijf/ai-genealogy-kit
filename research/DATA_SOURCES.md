@@ -160,6 +160,15 @@ Legend:
 - **Login:** No
 - **Relevance:** MEDIUM. Relevant if any family lines pass through the Nijmegen area.
 
+### Stadsarchief Delft (Erfgoed Delft)
+
+- **URL:** <https://zoeken.stadsarchiefdelft.nl/>
+- **Contains:** Person records for Delft, Midden-Delfland, Pijnacker-Nootdorp, Rijswijk, Maasland, and Schipluiden. Record types: BS (civil registry), DTB (church records), bevolkingsregister, ingekomen/vertrokken personen, notariele akten. 185+ Knijf records. Scans available for most records.
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/erfgoed-delft/SKILL.md` — Clean URL search with session cookie (DeventIT Atlantis Web platform)
+- **Relevance:** HIGH. Contains Jacob de Knijf x Teunisje Brouwer marriage record (28 Sep 1923) and many other Knijf/de Knijf records in the Delft area.
+
 ### Drents Archief (Drenthe Provincial Archive)
 
 - **URL:** <https://www.drentsarchief.nl/>
@@ -201,6 +210,15 @@ Legend:
 - **Cost:** Free
 - **Login:** No
 - **Relevance:** MEDIUM. Background and context for Gelderland family history.
+
+### Noord-Hollands Archief (Provincial Archive Noord-Holland)
+
+- **URL:** <https://noord-hollandsarchief.nl/>
+- **Contains:** 12.7M+ indexed person records covering all Noord-Holland municipalities. BS (births, marriages, deaths), DTB (church baptisms), bevolkingsregister, militieregisters, notarial records, vredegerecht, memorie van successie, overlijdensverklaringen, faillissementsdossiers.
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/noord-hollands-archief/SKILL.md` — OpenArchieven JSON API (`archive=nha`) as primary method, MAIS URL parameters (`mivast=236`) for detail views. No browser needed.
+- **Relevance:** HIGH. Provincial archive for Haarlem and Noord-Holland. Needed for Makkelie family research and maritime/schepelingen records.
 
 ---
 
