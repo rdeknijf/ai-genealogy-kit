@@ -417,6 +417,32 @@ def _escape(text: str) -> str:
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
 
 
+def tiers_from_db(db_path: str) -> dict[str, str]:
+    """Query best tier per person from the research database."""
+    import sqlite3
+    tier_rank = {"A": 0, "B": 1, "C": 2, "D": 3}
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    rows = conn.execute(
+        "SELECT fp.person_id, f.tier FROM findings f "
+        "JOIN finding_persons fp ON f.id = fp.finding_id "
+        "WHERE f.tier IS NOT NULL AND (f.status IS NULL OR f.status != 'REJECTED')"
+    ).fetchall()
+    conn.close()
+
+    person_tiers: dict[str, list[str]] = {}
+    for r in rows:
+        pid = r["person_id"]
+        if pid not in person_tiers:
+            person_tiers[pid] = []
+        person_tiers[pid].append(r["tier"])
+
+    return {
+        pid: min(tiers, key=lambda t: tier_rank.get(t, 99))
+        for pid, tiers in person_tiers.items()
+    }
+
+
 def main():
     import argparse
 
@@ -429,10 +455,15 @@ def main():
                         help="Path to FINDINGS.md")
     parser.add_argument("--output", "-o", default="private/fan_chart.svg",
                         help="Output SVG path (default: private/fan_chart.svg)")
+    parser.add_argument("--db", default="private/genealogy.db",
+                        help="Path to research database")
+    parser.add_argument("--no-db", action="store_true",
+                        help="Skip database tier source, use FINDINGS.md only")
     args = parser.parse_args()
 
     ged_path = Path(args.gedcom)
     findings_path = Path(args.findings)
+    db_path = Path(args.db)
     root_id = os.environ.get("GEDCOM_ROOT_ID", "I0000")
     num_generations = args.generations
 
@@ -447,14 +478,19 @@ def main():
 
     print(f"Loaded {len(individuals)} individuals, {len(families)} families")
 
-    # Derive tiers: GEDCOM sources as base, FINDINGS.md overrides
+    # Derive tiers: GEDCOM sources as base layer
     person_tiers = derive_tiers_from_gedcom(records, individuals)
     gedcom_count = len(person_tiers)
     print(f"Derived tiers for {gedcom_count} persons from GEDCOM source citations")
 
-    if findings_path.exists():
+    # Override layer: DB (primary) or FINDINGS.md (fallback)
+    if not args.no_db and db_path.exists():
+        db_tiers = tiers_from_db(str(db_path))
+        person_tiers.update(db_tiers)
+        print(f"DB overrides/additions for {len(db_tiers)} persons")
+    elif findings_path.exists():
         findings_tiers = parse_findings(str(findings_path))
-        person_tiers.update(findings_tiers)  # FINDINGS.md overrides GEDCOM-derived
+        person_tiers.update(findings_tiers)
         print(f"FINDINGS.md overrides/additions for {len(findings_tiers)} persons")
 
     # Build Ahnentafel
