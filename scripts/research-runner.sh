@@ -137,15 +137,16 @@ no summary at all. The next session will continue where you left off.
 
 ## Your task
 
-Pick ONE highest-priority QUEUED item from `private/research/RESEARCH_QUEUE.md`
-and investigate it. Do NOT work on multiple queue items in a single session.
+Use `python scripts/research_db.py get-tasks --limit 1` to pick the highest-priority
+task. Then `python scripts/research_db.py get-person <ID>` for each person in the task
+to get current state. Do NOT work on multiple queue items in a single session.
 
 Read and follow the research skill at `.claude/skills/research/SKILL.md`.
 Run 1-2 full research cycles. Each cycle has 4 phases:
 
-1. **Assess** — read the RESEARCH_QUEUE item for context: people IDs, current data
-   tier, research goals, and where to look. Parse `private/tree.ged` to get the
-   current GEDCOM data for those persons. Understand what's known vs unknown.
+1. **Assess** — use `research_db.py get-tasks` and `get-person` to understand the
+   task context: people IDs, current data tier, research goals, and where to look.
+   Understand what's known vs unknown.
 
 2. **Lookup** — search archives using the skills in `.claude/skills/`
    (wiewaswie.md, openarchieven.md, gelders-archief.md, etc.). Use sub-agents
@@ -156,19 +157,19 @@ Run 1-2 full research cycles. Each cycle has 4 phases:
    - Add/correct dates and places from official records
    - Add source citations (SOUR records) with archive references
    - Add newly discovered parents as INDI+FAM records
-   - CRITICAL: check highest existing INDI/FAM/SOUR IDs first to avoid
-     collisions (see research skill for the exact commands)
+   - CRITICAL: use `research_db.py next-id --type indi/fam/sour` to avoid
+     ID collisions (see research skill for the exact commands)
    - Only apply Tier A/B evidence (official archive records)
    - For Tier C/D findings, document but do NOT edit the GEDCOM
 
-4. **Document** — append findings to `private/research/FINDINGS.md` with
-   finding number, person ID, tier, status, evidence, and archive refs.
-   Update the queue item's status in RESEARCH_QUEUE.md (QUEUED → IN_PROGRESS → DONE).
+4. **Document** — use `python scripts/research_db.py add-finding '<json>'` with
+   finding ID, person IDs, tier, status, evidence, and archive refs.
+   Update the task via `research_db.py update-task <RQ-ID> --status DONE --note "..."`
 
 ## Rules
 
-- Read `private/research/FINDINGS.md` AND `private/research/RESEARCH_QUEUE.md`
-  FIRST to see what's been done and avoid duplicate work.
+- Use `research_db.py get-tasks` and `search` to understand what's been done.
+  Do NOT read FINDINGS.md or RESEARCH_QUEUE.md directly (saves ~500K tokens).
 - Pick ONE QUEUED item — don't work on multiple items per session.
 - Continue an IN_PROGRESS item if it has open leads.
 - Each cycle must make progress on the queue item (new lookups, new findings).
@@ -207,9 +208,13 @@ are running low on turns. Format:
 PROMPT
 
 # --- Main loop ---
+# Sync GEDCOM to DB before starting
+log "Syncing GEDCOM to research database..."
+python3 scripts/research_db.py sync-from-gedcom 2>&1 | tail -4
+
 session_num=0
 total_findings=0
-prev_findings_count=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
+prev_findings_count=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo 0)
 log "Starting findings count: $prev_findings_count"
 
 while [[ $session_num -lt $MAX_SESSIONS ]]; do
@@ -252,10 +257,9 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
 
     log "Session $session_num complete. Log: $logfile"
 
-    # Count new findings from FINDINGS.md (authoritative) and session log (backup)
-    current_findings=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
+    # Count new findings from DB (authoritative) and session log (backup)
+    current_findings=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo "$prev_findings_count")
     if [[ -z "$prev_findings_count" ]]; then
-        # First session — can't diff, fall back to log grep
         new_findings=$({ grep -oP 'F-\d{1,4}' "$logfile" 2>/dev/null || true; } | sort -u | wc -l)
     else
         new_findings=$((current_findings - prev_findings_count))
@@ -269,8 +273,12 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     sleep 30
 done
 
-final_findings=$({ grep -cP '^## F-\d+' private/research/FINDINGS.md 2>/dev/null || true; })
+# Sync DB back to markdown for human readability
+log "Syncing DB to markdown..."
+python3 scripts/research_db.py sync-to-markdown 2>&1 | head -2
+
+final_findings=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo "?")
 log "=== Unattended Research Complete ==="
 log "Sessions run: $session_num"
-log "New findings this run: $total_findings (FINDINGS.md total: $final_findings)"
+log "New findings this run: $total_findings (DB total: $final_findings)"
 log "Logs: $LOG_DIR/unattended-*.md"

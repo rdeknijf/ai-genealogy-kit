@@ -76,12 +76,14 @@ Tiers are derived in two layers:
    - `S500xxx` (MyHeritage user trees) → **Tier D**
    - No sources → unresearched (gray)
 
-2. **FINDINGS.md** (override layer) — `private/research/FINDINGS.md` entries
-   override the GEDCOM-derived tier. This is where Tier A (primary source
-   personally verified) and Tier C (multiple secondary sources) come from.
+2. **Research database** (override layer, primary) — `private/genealogy.db`
+   findings override the GEDCOM-derived tier via `finding_persons` join. Falls
+   back to **FINDINGS.md** if the DB doesn't exist. Use `--no-db` to force
+   FINDINGS.md, or `--db <path>` for a non-default database.
 
-This means the chart works with just the GEDCOM file — FINDINGS.md is optional
-but adds finer-grained classification.
+This means the chart works with just the GEDCOM file — the DB/FINDINGS.md is
+optional but adds finer-grained classification (Tier A from primary source
+verification, Tier C from multiple secondary sources).
 
 ## What the Chart Shows
 

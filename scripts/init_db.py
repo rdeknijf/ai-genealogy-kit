@@ -1,95 +1,63 @@
 #!/usr/bin/env python3
+"""Initialize the genealogy research SQLite database from schema.sql."""
+
+import argparse
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "private" / "genealogy.db"
+SCHEMA_PATH = Path(__file__).parent / "schema.sql"
+DEFAULT_DB = Path(__file__).parent.parent / "private" / "genealogy.db"
 
-SCHEMA = """
--- Individuals: Cache of GEDCOM INDI records
-CREATE TABLE IF NOT EXISTS people (
-    id TEXT PRIMARY KEY,
-    name TEXT,
-    birth_year INTEGER,
-    death_year INTEGER,
-    gedcom_record TEXT
-);
 
--- Families: Cache of GEDCOM FAM records
-CREATE TABLE IF NOT EXISTS families (
-    id TEXT PRIMARY KEY,
-    husband_id TEXT,
-    wife_id TEXT,
-    gedcom_record TEXT,
-    FOREIGN KEY(husband_id) REFERENCES people(id),
-    FOREIGN KEY(wife_id) REFERENCES people(id)
-);
+def init_db(db_path: Path, reset: bool = False):
+    db_path.parent.mkdir(parents=True, exist_ok=True)
 
--- Sources: Cache of GEDCOM SOUR records
-CREATE TABLE IF NOT EXISTS sources (
-    id TEXT PRIMARY KEY,
-    title TEXT,
-    gedcom_record TEXT
-);
+    conn = sqlite3.connect(db_path)
 
--- Findings: Migration from FINDINGS.md
-CREATE TABLE IF NOT EXISTS findings (
-    id TEXT PRIMARY KEY,
-    person_id TEXT,
-    title TEXT,
-    tier TEXT,
-    status TEXT,
-    date_found TEXT,
-    gedcom_says TEXT,
-    evidence_found TEXT,
-    resolution TEXT,
-    notes TEXT,
-    raw_markdown TEXT,
-    FOREIGN KEY(person_id) REFERENCES people(id)
-);
+    if reset:
+        # Drop all tables (order matters for foreign keys)
+        conn.execute("PRAGMA foreign_keys = OFF")
+        tables = [r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()]
+        for t in tables:
+            conn.execute(f"DROP TABLE IF EXISTS [{t}]")
+        # Also drop FTS virtual tables
+        for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '%_fts%'"
+        ).fetchall():
+            conn.execute(f"DROP TABLE IF EXISTS [{r[0]}]")
+        conn.commit()
+        print(f"Reset: dropped {len(tables)} tables")
 
--- Research Queue: Migration from RESEARCH_QUEUE.md
-CREATE TABLE IF NOT EXISTS research_queue (
-    id TEXT PRIMARY KEY,
-    title TEXT,
-    priority INTEGER,
-    status TEXT,
-    people_ids TEXT,
-    goal TEXT,
-    where_to_look TEXT,
-    notes TEXT,
-    updates JSON,
-    raw_markdown TEXT
-);
-
--- Session Logs: Audit trail for AI sessions
-CREATE TABLE IF NOT EXISTS session_logs (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    session_id TEXT,
-    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-    action TEXT,
-    affected_ids TEXT,
-    summary TEXT
-);
-
--- Enable Full-Text Search on findings
-CREATE VIRTUAL TABLE IF NOT EXISTS findings_fts USING fts5(
-    id UNINDEXED,
-    person_id,
-    title,
-    content,
-    content='findings',
-    content_rowid='rowid'
-);
-"""
-
-def init_db():
-    print(f"Initializing database at {DB_PATH}...")
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
-    conn.executescript(SCHEMA)
+    schema = SCHEMA_PATH.read_text(encoding="utf-8")
+    conn.executescript(schema)
     conn.commit()
+
+    # Print table list and row counts
+    tables = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' "
+        "AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '%_fts_%' "
+        "ORDER BY name"
+    ).fetchall()
+
+    print(f"Database: {db_path}")
+    print(f"Tables ({len(tables)}):")
+    for (name,) in tables:
+        count = conn.execute(f"SELECT count(*) FROM [{name}]").fetchone()[0]
+        print(f"  {name:<30s} {count:>8d} rows")
+
     conn.close()
-    print("Database initialized successfully.")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Initialize genealogy research database")
+    parser.add_argument("--db", type=Path, default=DEFAULT_DB, help="Database path")
+    parser.add_argument("--reset", action="store_true", help="Drop and recreate all tables")
+    args = parser.parse_args()
+
+    init_db(args.db, args.reset)
+
 
 if __name__ == "__main__":
-    init_db()
+    main()

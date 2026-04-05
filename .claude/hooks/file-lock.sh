@@ -14,8 +14,7 @@ STALE_SECONDS=300
 
 # Map file patterns to lock names (each gets an independent lock)
 case "$FILE_PATH" in
-  *private/tree.ged)              LOCK_NAME="gedcom-tree-ged" ;;
-  *private/research/FINDINGS.md)  LOCK_NAME="research-findings" ;;
+  *private/tree.ged)  LOCK_NAME="gedcom-tree-ged" ;;
   *) exit 0 ;;
 esac
 

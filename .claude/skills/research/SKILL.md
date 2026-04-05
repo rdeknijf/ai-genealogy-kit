@@ -97,8 +97,19 @@ Each cycle has 4 phases. The whole cycle should take ~15 minutes.
 
 ### Phase 1: Assess (2 min)
 
-Parse the GEDCOM and trace the root individual's ancestors to identify
-gaps. For each direct ancestor, check:
+Use the research database to understand the current state:
+
+```bash
+python scripts/research_db.py get-tasks --limit 3     # prioritized tasks
+python scripts/research_db.py get-person I0100         # person + findings + family
+python scripts/research_db.py get-research-state I0100 # quick summary
+```
+
+For each target person, `get-person` returns their GEDCOM data, all
+findings, family links, and research state (~3-5K tokens per person
+instead of ~500K for reading FINDINGS.md).
+
+Check what's missing per person:
 
 - Birth: has date AND place AND event-level source (SOUR under BIRT)?
 - Death: has date AND place AND event-level source (SOUR under DEAT)?
@@ -128,16 +139,16 @@ lookup cycles on records that won't be publicly available online.
 **Within a generation**, prioritize:
 
 - Missing death/birth DATES over missing sources on known dates
-- Missing sources on verified findings (findings file says APPLIED but
-  GEDCOM event lacks SOUR) over new lookups
+- Missing sources on verified findings (APPLIED status but GEDCOM event
+  lacks SOUR) over new lookups
 - Persons with concrete open leads from previous research
 
-**Use `scripts/gedcom_query.py`** for all GEDCOM queries:
+**Use `scripts/gedcom_query.py`** for direct GEDCOM queries:
 
 ```bash
 python scripts/gedcom_query.py ids                    # highest IDs + counts
 python scripts/gedcom_query.py gaps I0100 I0200 ...   # gap analysis
-python scripts/gedcom_query.py person I0100            # full record
+python scripts/gedcom_query.py person I0100            # full GEDCOM record
 python scripts/gedcom_query.py search "Kemmann"        # find by surname
 python scripts/gedcom_query.py validate                # integrity check
 ```
@@ -186,13 +197,13 @@ Return ALL findings in structured format with full archive references.
 
 For each record found by the agent:
 
-1. **Check source ID space** — find the highest existing source ID:
+1. **Check source ID space** — use the DB to get the next safe ID:
    ```bash
-   grep -oP 'S\d+' <gedcom_path> | sort -t'S' -k2 -n -u | tail -5
+   python scripts/research_db.py next-id --type sour
    ```
-   Start new sources ABOVE the highest number. Source ID collisions
-   cause data integrity issues and are hard to debug — previous
-   sessions may have used IDs that look available but aren't.
+   Source ID collisions cause data integrity issues and are hard to
+   debug — previous sessions may have used IDs that look available but
+   aren't.
 
 2. **Edit the GEDCOM event** — add `2 SOUR @SXXXXXX@` with inline
    `3 DATA / 4 TEXT` containing the archive reference.
@@ -212,13 +223,12 @@ For each record found by the agent:
 5. **Add new persons** if marriage records reveal parents not yet in
    the GEDCOM. Create INDI + FAM records and link via FAMC.
 
-   **CRITICAL: Check INDI and FAM ID space first** — just like source IDs,
-   you must verify the IDs you assign don't already exist:
+   **CRITICAL: Check INDI and FAM ID space first** — use the DB for safe IDs:
    ```bash
-   grep -oP 'I\d+' <gedcom_path> | sort -t'I' -k2 -n -u | tail -5
-   grep -oP 'F\d+' <gedcom_path> | sort -t'F' -k2 -n -u | tail -5
+   python scripts/research_db.py next-id --type indi
+   python scripts/research_db.py next-id --type fam
    ```
-   Start new records ABOVE the highest number. INDI/FAM ID collisions are
+   Start new records at or above the returned ID. INDI/FAM ID collisions are
    worse than source collisions — they silently cause GEDCOM parsers to
    link the wrong person as a parent, spouse, or child. A previous session
    created records I600007-I600010 and F600004-F600005 that collided with
@@ -226,14 +236,18 @@ For each record found by the agent:
 
 ### Phase 4: Document (2 min)
 
-Add findings to the project's findings file with:
+Add findings to the database via `research_db.py add-finding`:
 
-- Finding number (sequential)
-- Person ID and name
-- Confidence tier and status
-- Full evidence with archive references and scan URLs
-- Cross-validation notes (age checks, parent name matches)
-- What was corrected in the GEDCOM
+```bash
+python scripts/research_db.py add-finding '{"title": "...", "person_ids": ["I0067"], "tier": "B", "status": "APPLIED", "evidence": "...", "resolution": "...", "queue_ref": "RQ-001"}'
+```
+
+The command auto-generates the finding ID, builds raw_markdown, and links persons.
+Update task status:
+
+```bash
+python scripts/research_db.py update-task RQ-001 --status DONE --note "Found birth record..."
+```
 
 ### Validate
 

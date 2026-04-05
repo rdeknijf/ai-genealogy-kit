@@ -29,14 +29,14 @@ and can run for hours unattended.
 [You: babysitter session] ---monitors---> [research-runner.sh] ---spawns---> [claude -p sessions]
                                                |                                    |
                                                |                                    v
-                                               |                              GEDCOM + FINDINGS.md
+                                               |                              GEDCOM + genealogy.db
                                                v
                                           runner.log
 ```
 
 - `scripts/research-runner.sh` loops, launching fresh `claude -p` sessions
-- Each session gets fresh context (~250k tokens for 2-3 research cycles)
-- State persists in `private/tree.ged` and `private/research/FINDINGS.md`
+- Each session gets fresh context (~3-5K tokens per person via DB queries)
+- State persists in `private/tree.ged` and `private/genealogy.db`
 - The runner checks API usage between sessions and stops at the ceiling
 - You monitor via a 15-minute cron, restarting if it crashes
 

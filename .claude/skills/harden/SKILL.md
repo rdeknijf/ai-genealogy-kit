@@ -91,10 +91,10 @@ a. **Search official archives** — determine the right sources based on
    is from a region or country with no skill, use `/onboard-datasource`
    to create one first. **If you discover a relevant datasource that has
    no skill** (e.g., military records, colonial archives, specialized
-   databases), tell the user and note it in FINDINGS.md — missing
+   databases), tell the user and note it in the research DB — missing
    datasources are important to flag so they can be onboarded.
 b. **Cross-validate** — check internal consistency across records
-c. **Document** — write findings to `private/research/FINDINGS.md` with tier and
+c. **Document** — write findings via `python scripts/research_db.py add-finding` with tier and
    source reference
 d. **Flag discrepancies** — if a record contradicts the GEDCOM, flag it
    clearly for user review
@@ -102,7 +102,7 @@ d. **Flag discrepancies** — if a record contradicts the GEDCOM, flag it
 ### 4. Apply verified data
 
 - Tier A/B findings -> edit GEDCOM with source citation (after user review)
-- Tier C findings -> flag in private/research/FINDINGS.md
+- Tier C findings -> add to research DB via `research_db.py add-finding`
 - Discrepancies -> discuss with user before any edit
 
 ### 5. Report the hardening status
@@ -129,7 +129,7 @@ A person can be HARD without a marriage record.
 
 Each person's verification is independent. Use sub-agents where possible,
 but respect the Playwright concurrency constraint (one browser session).
-Non-browser work (GEDCOM parsing, cross-validation, FINDINGS.md writing)
+Non-browser work (GEDCOM parsing, cross-validation, DB writing)
 can run in parallel with browser lookups.
 
 ## After hardening

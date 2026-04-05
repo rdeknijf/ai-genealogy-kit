@@ -35,8 +35,13 @@ private/research/*-verification.json
 ```
 
 If none exist, or if the user asks to verify results from a specific
-research session, build the JSON from FINDINGS.md entries that are Tier C
-or D and have scan URLs.
+research session, query the DB for Tier C/D findings with scan URLs:
+
+```bash
+python scripts/research_db.py search "scan" --limit 50
+```
+
+Or query directly: findings with tier C/D and raw_markdown containing URLs.
 
 ### 2. Build the verification JSON
 

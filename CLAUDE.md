@@ -29,11 +29,20 @@ The research state is stored in a local SQLite database at `private/genealogy.db
 
 ### Database Tooling (`scripts/research_db.py`)
 
-- `get-tasks [--limit 5]` — Get prioritized `QUEUED` research tasks.
-- `get-person <ID>` — Get person data, GEDCOM record, and ALL associated findings.
-- `search "<query>"` — Full-text search across 1250+ research findings.
-- `add-finding '<json>'` — Add a new finding to the database.
-- `update-task <ID> --status <STATUS> [--note "<note>"]` — Update task progress.
+| Command | Purpose |
+|---------|---------|
+| `get-tasks [--limit N] [--status S]` | Active queue items |
+| `get-person ID` | Person + findings + family + research state |
+| `get-research-state ID` | Just the summary paragraph |
+| `search QUERY [--limit N]` | FTS5 across findings |
+| `add-finding JSON` | Insert finding + auto-link persons |
+| `update-task ID --status S [--note T]` | Update queue item |
+| `next-id [--type finding\|indi\|fam\|sour]` | Next available ID |
+| `log-run JSON` | Record session metrics in task_runs |
+| `stats` | Table counts, tier/status distribution |
+| `sync-from-gedcom` | Refresh persons/families/sources from tree.ged |
+| `sync-to-markdown` | Regenerate FINDINGS.md + RESEARCH_QUEUE.md from DB |
+| `rebuild-research-state [--person ID]` | Recompute summaries |
 
 ## Data Integrity — CRITICAL
 
@@ -119,18 +128,15 @@ Key `playwright-cli` features for research:
 - `screenshot` — capture document scans
 - Snapshots save to `.playwright-cli/*.yml` files (token-efficient)
 
-### Locking for concurrent agents
+### Locking and concurrency
 
-Two independent locks protect shared resources:
+| Resource | Mechanism |
+|----------|-----------|
+| `private/tree.ged` | File lock via `.claude/hooks/file-lock.sh` (atomic mkdir, 5s wait) |
+| `private/genealogy.db` | SQLite WAL mode (concurrent reads, sequential writes) |
 
-| Resource | Lock | Hook | Wait timeout |
-|----------|------|------|-------------|
-| `private/tree.ged` | `gedcom-tree-ged` | `.claude/hooks/file-lock.sh` | 5s |
-| `private/research/FINDINGS.md` | `research-findings` | `.claude/hooks/file-lock.sh` | 5s |
-
-All locks use atomic `mkdir` in `/tmp/`, track ownership by session ID,
-and expire after 5 minutes (stale lock cleanup). No action needed — the
-hooks run automatically on Edit/Write calls.
+FINDINGS.md is now a derived artifact regenerated via `research_db.py sync-to-markdown`.
+No file lock needed — the DB is the source of truth.
 
 Note: `playwright-cli` uses named sessions (`-s=name`) for parallelism —
 no browser lock needed.
@@ -141,21 +147,22 @@ These rules apply to research-runner sessions and any unattended research agents
 
 ### Persist findings immediately
 
-Write findings to `private/research/FINDINGS.md` and update `RESEARCH_QUEUE.md`
-after EACH research cycle, not at the end of the session. Sessions can hit max
-turns or context limits at any time — unwritten findings are permanently lost.
+Write findings to the database via `research_db.py add-finding` and update
+tasks via `research_db.py update-task` after EACH research cycle, not at the
+end of the session. Sessions can hit max turns or context limits at any time —
+unwritten findings are permanently lost.
 
 ### Worker limits and commit discipline
 
 - Maximum **3 concurrent** research worker subagents per runner session
 - Research workers must **never commit or push** — only the management agent
   (research-runner or the human) may commit
-- Workers write to FINDINGS.md and RESEARCH_QUEUE.md only
+- Workers write to the DB via `research_db.py` only
 
 ### No duplicate verification
 
-Before requesting human verification of an archive scan, check
-`private/research/FINDINGS.md` and verification records to confirm the scan
+Before requesting human verification of an archive scan, search the database
+(`research_db.py search`) and verification records to confirm the scan
 has not already been verified. Never present the same scan twice.
 
 ### Subagent tool awareness
