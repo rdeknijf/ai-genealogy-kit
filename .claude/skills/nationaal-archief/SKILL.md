@@ -138,6 +138,56 @@ curl -s "https://service.archief.nl/gaf/api/search?q=SURNAME&rows=10&start=0"
 | `2.09.16.08` | Nederlands Beheersinstituut dossiers |
 | `2.05.117` | Buitenlandse Zaken code-archief 1945-1954 |
 
+## Tertiary method: HUB3 API — Landmacht Stamboeken 1795-1813
+
+Direct JSON API for Napoleonic-era army service record books. Same HUB3 API
+pattern as the VOC Opvarenden skill (nt00444), but index **nt00239**.
+
+**Index:** Landmacht Stamboeken 1795-1813 (nt00239)
+**Records:** 61,255 entries (49,909 soldaat, 8,446 officier, 2,897 onderofficier)
+**Source:** Archive inventory 2.01.15 at the Nationaal Archief
+**Scans:** Digitized and viewable online
+
+### Search by surname
+
+```bash
+curl -s "https://service.archief.nl/hub3/api/nt/nt00239?q=SURNAME&rows=10" \
+  -H "User-Agent: Mozilla/5.0" -H "Accept: application/json"
+```
+
+**Parameters:**
+
+| Parameter | Description |
+|---|---|
+| `q` | Search term (surname) |
+| `rows` | Results per page |
+
+**Response fields per result:**
+
+- `surname` — family name
+- `tussenvoegsel` — name prefix (de, van, van der, etc.)
+- `voornaam` / `voorletters` — first name or initials
+- `rank` — military rank (soldaat, officier, onderofficier)
+
+### Supplement index: nt00245
+
+A supplementary index **nt00245** ("Landmacht: Stamboeken supplement")
+covers the period 1795-1810 with additional entries not in the main index.
+Same API pattern:
+
+```bash
+curl -s "https://service.archief.nl/hub3/api/nt/nt00245?q=SURNAME&rows=10" \
+  -H "User-Agent: Mozilla/5.0" -H "Accept: application/json"
+```
+
+### When to use
+
+Search both nt00239 and nt00245 when looking for military ancestors during
+the Batavian Republic / Napoleonic period (1795-1813). These records
+predate the post-1813 Stamboeken available via the Open Archives API and
+cover the French-era Dutch army. The NIMH skill also has ~53K Napoleon-era
+records via OpenArchieven — check both sources.
+
 ## Workflow
 
 ### For person searches (WWII, military, colonial):

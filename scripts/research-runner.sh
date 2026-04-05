@@ -174,10 +174,11 @@ Run 1-2 full research cycles. Each cycle has 4 phases:
 - Each cycle must make progress on the queue item (new lookups, new findings).
 - Run the GEDCOM validation script after edits (see research skill).
 - **Flag missing datasources:** if you identify a relevant archive or database
-  that has no skill in `.claude/skills/`, note it in your findings. Examples:
-  a military database for a soldier ancestor, a regional archive for a new
-  region, or a specialized collection (KNIL, notarial, guild records). Include
-  the datasource name, URL if known, and why it would help.
+  that has no skill in `.claude/skills/`, add it to `research/DATASOURCE_CANDIDATES.md`
+  using the template in that file. Also mention it in your session summary under
+  "Missing datasources". Examples: a regional archive for a new region, a
+  specialized collection (military, notarial, guild records), or an online
+  database with indexed records that would speed up future research.
 
 ## OUTPUT SUMMARY — MANDATORY
 

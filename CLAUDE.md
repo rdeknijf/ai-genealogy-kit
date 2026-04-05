@@ -22,16 +22,29 @@ The local `private/tree.ged` is the working copy for AI research and analysis.
 All personal data lives in `private/` — it has its own git repo with LFS
 for binary files (images, scans, PDFs). See `private/README.md`.
 
+## Research Database — CRITICAL
+
+The research state is stored in a local SQLite database at `private/genealogy.db`. 
+**NEVER** read `FINDINGS.md` or `RESEARCH_QUEUE.md` at startup. Instead, use the `scripts/research_db.py` tool to fetch only the context you need. This saves ~500K tokens per session.
+
+### Database Tooling (`scripts/research_db.py`)
+
+- `get-tasks [--limit 5]` — Get prioritized `QUEUED` research tasks.
+- `get-person <ID>` — Get person data, GEDCOM record, and ALL associated findings.
+- `search "<query>"` — Full-text search across 1250+ research findings.
+- `add-finding '<json>'` — Add a new finding to the database.
+- `update-task <ID> --status <STATUS> [--note "<note>"]` — Update task progress.
+
 ## Data Integrity — CRITICAL
 
 NEVER edit the GEDCOM file based on AI inference or unverified secondary sources.
-All changes must follow the confidence tier system documented in `private/research/FINDINGS.md`.
+All changes must follow the confidence tier system. Findings are stored in `private/genealogy.db` and can be synced to `private/research/FINDINGS.md`.
 
 | Tier | Source | Action |
 |------|--------|--------|
 | **A** | Primary source (civil record scan, church book) user has seen | Edit GEDCOM directly |
 | **B** | Indexed civil record from official archive with reference | Edit with source citation |
-| **C** | Multiple independent secondary sources agree | Flag in private/research/FINDINGS.md for review |
+| **C** | Multiple independent secondary sources agree | Add to DB as Tier C for review |
 | **D** | Single secondary source or AI inference | Note only, never edit |
 
 When in doubt, **flag it, don't fix it**. Wrong data in a family tree is worse than missing data.
@@ -47,13 +60,12 @@ Project-local skills exist for each source — see `.claude/skills/`.
 
 ## Tools & Approach
 
-- Parse and analyze GEDCOM files programmatically (Python with `uv`)
-- Use web search to find indexed records, then verify with primary sources
-- Cross-reference multiple independent sources before flagging changes
-- Track all findings in `private/research/FINDINGS.md` with tier and status
-- Check `private/research/RESEARCH_QUEUE.md` for prioritized research leads beyond standard hardening
-- Check `private/research/HUMAN_ACTIONS.md` for things only Rutger can do (archive visits, subscriptions, family questions) — never duplicate these as AI tasks
-- Keep notes on unresolved questions and research leads
+- **Use `scripts/research_db.py`** to manage research state (Tasks, Findings).
+- **Use `scripts/gedcom_query.py`** for fast GEDCOM record lookups (though `get-person` in DB is preferred).
+- Use web search to find indexed records, then verify with primary sources.
+- Cross-reference multiple independent sources before flagging changes.
+- Track all findings in the database with tier and status.
+- Check `private/research/HUMAN_ACTIONS.md` for things only Rutger can do (archive visits, subscriptions, family questions) — never duplicate these as AI tasks.
 
 ### Fan Chart — Research Verification Status
 
@@ -65,47 +77,16 @@ python scripts/fan_chart.py [GENERATIONS]    # default: 7
 
 Outputs `private/fan_chart.svg`. Colors: green (Tier A), blue (Tier B),
 amber (Tier C), red (Tier D), gray (unresearched), light gray (unknown).
-Tiers are derived from GEDCOM source citations, with FINDINGS.md overrides.
-See `/fan-chart` skill for details.
+Tiers are derived from GEDCOM source citations and database overrides.
 
 ## Research Workflow — Harden First, Then Extend
 
-**Default approach:** When working on any family line, harden (verify)
-existing data first before trying to extend further back. This doesn't
-block exploration — it establishes how solid each node is so you know
-where proven facts end and speculation begins. See `/harden` skill.
-
-Researching means determining the right data sources to check based on
-the time period and location of the person, in order of logical priority.
-Data source skills exist in `.claude/skills/` — use `/onboard-datasource`
-to create new ones, `/improve-datasource` to make existing ones faster.
-
-### Flag missing datasources (MANDATORY)
-
-During research, if you identify a relevant data source that has no
-skill in `.claude/skills/` — **tell the user and note it**. This includes:
-
-- An archive for a region/country with no existing skill
-- A specialized record type (military, notarial, guild, colonial) that
-  a different database covers better than what we have
-- A database mentioned in `research/DATA_SOURCES.md` that would help
-  but has no skill yet (e.g., Militieregisters.nl, NIMH, KNIL records)
-- A source discovered during research that isn't in DATA_SOURCES.md at all
-
-When this happens: (1) mention it to the user in your output, (2) add a
-note in `private/research/FINDINGS.md` under the relevant finding, and
-(3) if the source would be broadly useful, suggest onboarding it.
-
-When systematically verifying a line (patrilineal, matrilineal, or any
-branch), follow this workflow:
-
-1. **Extract the line** — parse `private/tree.ged` to get all persons in the
-   line with their current GEDCOM data
-2. **Verify each person** — for every person, look up birth, marriage,
-   and death records in official archives. Cross-validate ages across
-   records (age at marriage + marriage year = birth year, etc.)
-3. **Document** — write findings to `private/research/FINDINGS.md` with tier
-4. **Apply** — edit GEDCOM only for Tier A/B evidence
+1. **Get Next Task** — `python scripts/research_db.py get-tasks`
+2. **Get Context** — `python scripts/research_db.py get-person <ID>` for each person in the task.
+3. **Verify** — search archives, look up birth, marriage, and death records.
+4. **Document** — `python scripts/research_db.py add-finding`
+5. **Update Queue** — `python scripts/research_db.py update-task <RQ-ID> --status DONE --note "Found birth record..."`
+6. **Apply** — edit GEDCOM ONLY for Tier A/B evidence.
 
 ### Sub-agents for parallel verification
 
@@ -224,3 +205,21 @@ must go through Git LFS in the private repo — never commit binaries directly.
 
 All binary files in `private/` are tracked by Git LFS. Before committing
 any new binary (image, PDF, scan), verify LFS tracking with `git lfs track`.
+
+## Memory (QMD)
+
+Rutger has a persistent knowledge base searched by QMD (BM25, instant).
+The genealogy project has extensive context in `~/ai/memory/projects.md`
+(~200 lines of genealogy data) and `~/ai/memory/people.md` (family members).
+
+At session start, search QMD for relevant context:
+
+```bash
+qmd search "genealogy" --collection memory
+```
+
+After writing new facts to memory files, re-index:
+
+```bash
+qmd update
+```
