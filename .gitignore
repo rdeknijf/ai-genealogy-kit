@@ -38,6 +38,8 @@ scripts/apply_meta_corrections.py
 
 # Archives
 *.zip
+scripts/archive/
+docs/archive/
 
 # Python
 __pycache__/
