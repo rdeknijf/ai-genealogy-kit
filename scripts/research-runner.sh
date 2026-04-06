@@ -247,6 +247,7 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     timeout "$SESSION_TIMEOUT" \
         env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
         claude -p "$prompt" \
+        --model sonnet \
         --max-turns "$MAX_TURNS" \
         --output-format text \
         > "$logfile" 2>&1 \
