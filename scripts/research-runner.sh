@@ -2,7 +2,7 @@
 # research-runner.sh — run autonomous research cycles
 #
 # Each iteration launches a fresh `claude -p` session that does 2-3
-# research cycles, then exits. State persists in GEDCOM + FINDINGS.md.
+# research cycles, then exits. State persists in GEDCOM + database (private/genealogy.db).
 # The next session picks up where the last left off.
 #
 # Designed to be started by a babysitter Claude session that monitors
@@ -128,7 +128,7 @@ the counter, so you must manage your own budget:
 
 - **Turns 1-10:** Assess (read queue, read GEDCOM, understand the task)
 - **Turns 11-50:** Lookup + Apply (archive searches, sub-agents, GEDCOM edits)
-- **Turns 51-60:** Document (write findings to FINDINGS.md, update queue status)
+- **Turns 51-60:** Document (write findings to DB via research_db.py, update queue status)
 - **Turns 61-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
 
 If you are deep in research at turn ~50, STOP looking up new things and
@@ -268,7 +268,7 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     fi
     prev_findings_count="$current_findings"
     total_findings=$((total_findings + new_findings))
-    log "New findings this session: $new_findings (total in FINDINGS.md: $current_findings)"
+    log "New findings this session: $new_findings (DB total: $current_findings)"
 
     # Brief cooldown to let usage cache update
     sleep 30

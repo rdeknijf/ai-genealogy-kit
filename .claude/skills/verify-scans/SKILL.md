@@ -4,7 +4,7 @@ description: |
   Generate a scan verification page for the user to review AI-extracted
   genealogy findings against actual document scans. The user clicks through
   records, confirms or rejects each one, and confirmed records become Tier A
-  evidence in FINDINGS.md. Use this skill when: "verify scans", "show me
+  evidence in the research database. Use this skill when: "verify scans", "show me
   what needs verifying", "review pending scans", "scan verification",
   "/verify-scans", or when the user wants to upgrade research findings
   from Tier C/D to Tier A by visually confirming document scans. Also use
@@ -15,8 +15,8 @@ description: |
 # Verify Scans — Human-in-the-Loop Tier A Verification
 
 Generate an interactive HTML page where the user reviews document scans
-alongside AI analysis, then feed confirmed verdicts back into FINDINGS.md
-as Tier A evidence.
+alongside AI analysis, then feed confirmed verdicts back into the research
+database as Tier A evidence.
 
 ## When to use
 
@@ -103,19 +103,18 @@ b. Tell you they're done — read the localStorage state isn't possible,
 
 Read the exported verdicts JSON. For each record:
 
-- **status: "verified"** → Add to FINDINGS.md as Tier A:
-  ```
-  **Tier A** — confirmed by visual inspection of [source] scan
+- **status: "verified"** → Update finding in DB to Tier A via:
+  ```bash
+  python scripts/research_db.py add-finding '<json with tier A, status VERIFIED>'
   ```
   If the scan was downloaded, copy it to `private/sources/` for archival.
 
-- **status: "rejected"** → Note in FINDINGS.md that the scan did NOT
-  confirm the expected data. Keep as Tier D with a note explaining the
-  discrepancy.
+- **status: "rejected"** → Update finding in DB to status REJECTED with
+  a note explaining the discrepancy. Keep as Tier D.
 
 - **status: "pending"** → Skip, leave for next verification session.
 
-- **note** field → Include the user's note in the FINDINGS.md entry.
+- **note** field → Include the user's note in the finding record.
 
 ### 5. Update the GEDCOM (if applicable)
 
