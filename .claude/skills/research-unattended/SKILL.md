@@ -4,7 +4,7 @@ description: |
   Start and babysit autonomous genealogy research sessions running in
   separate background processes. The runner script launches sequential
   `claude -p` sessions that each do 2-3 research cycles with fresh context,
-  persisting state in GEDCOM + FINDINGS.md between sessions. This skill
+  persisting state in GEDCOM + database (private/genealogy.db) between sessions. This skill
   manages the full lifecycle: starting the runner, monitoring it, restarting
   on crashes, graceful stopping, and consolidating results.
   Use when: "start research", "run research for a while", "autonomous research",
@@ -134,7 +134,7 @@ CLAUDE_PID=$(pgrep -P RUNNER_PID -f claude | head -1)
 ```
 
 This lets the current research session complete its work (including writing
-to GEDCOM and FINDINGS.md) before stopping the loop.
+to GEDCOM and database) before stopping the loop.
 
 To stop immediately (not recommended — may leave partial edits):
 

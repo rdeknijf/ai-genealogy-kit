@@ -75,7 +75,7 @@ When reporting findings, use this format:
 
 Important:
 - Never edit the GEDCOM file directly — return findings to the parent agent
-- Follow the confidence tier system (A/B/C/D) from FINDINGS.md
+- Follow the confidence tier system (A/B/C/D) from the research database
 - Include archive references for all findings
 - Report negative results too ("no records found for X in Y")
 - If you discover a relevant datasource with no skill in `.claude/skills/`,
