@@ -69,6 +69,49 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 - **Priority:** LOW
 - **Status:** CANDIDATE
 
+## Gelders Archief online viewer — image browsing for unindexed DTB pages
+
+- **URL:** https://www.geldersarchief.nl/bronnen/archieven?mivast=37&mizig=0&miadt=37&miaet=54&micode=0176_454.01&minr=<MINR>&miview=ldt
+- **Discovered:** 2026-04-10, F-1344/F-1345 (RQ-014 session 2)
+- **Why:** Critical for Lebbing/Lebbink research. The Didam NDG baptism register (GA 0176/454.01) and Drempt NDG baptism register (GA 0176/986.1) are accessible as images via the GA viewer, but only a fraction is indexed in OpenArchieven. The 1665-1695 pages of Didam 454.01 would show children of Jan Gerritsen × Guetjen Janssen — one of whom may be Geurt Lebbink. The GA viewer works with curl (full HTML, 200) but the image itself requires JavaScript rendering. Headless playwright gets blocked ("Here be dragons" anti-bot). Requires: a non-headless browser session, or user manually browsing with `minr` values derived from OA records.
+- **Record types:** DTB Dopen (baptism), DTB Begraven (burial), DTB Trouwen (marriage) — image scans
+- **Estimated size:** GA holds all Gelderland DTB records pre-1811; many unindexed pages
+- **Access method:** Playwright with headed browser (non-headless) OR user manual access via the GA website
+- **Priority:** HIGH
+- **Status:** CANDIDATE — blocked by anti-bot on headless playwright
+
+## Vorden NDG baptism register (pre-1674) — unindexed pages for Lebbink family
+
+- **URL:** https://permalink.geldersarchief.nl/ (per-record permalinks) and GA viewer `mivast=37&micode=0176_1605`
+- **Discovered:** 2026-04-10, F-1354/F-1357 (RQ-014 session 4)
+- **Why:** Gerrit Lebbink (active 1660-1672 Brummen/Vorden) had confirmed sons Juriaen Gerritsen (married 1672) and Derck Gerritzen op Kleyn Lebbink (married 1707). The pre-1674 pages of Vorden NDG baptism register (GA 0176/1605) likely contain the baptism of Geurt Lebbink (~1655-1670) and may name his mother. Currently only post-1674 baptisms appear indexed in OA (first indexed baptism: Willem Lebbink 1674). Pages from 1640-1673 are presumably on earlier folios of the same register — accessible via GA viewer but not via OA/WieWasWie API.
+- **Record types:** DTB Dopen (baptism) — unindexed image scans only
+- **Estimated size:** ~35-40 years of pre-1674 baptism pages in registry 1605
+- **Access method:** GA web viewer with JavaScript (Playwright headed browser), or physical visit to Doetinchem
+- **Priority:** HIGH — probably contains Geurt Lebbink's baptism
+- **Status:** CANDIDATE — blocked by anti-bot on headless playwright
+
+## Doesburg NDG doopregister gap 1676-1705 — GA archief 0176
+
+- **URL:** https://www.geldersarchief.nl/bronnen/archieven?mivast=37&mizig=236&miadt=37&miaet=54&micode=0176_487.3&minr=24869710&miview=ldt
+- **Discovered:** 2026-04-10, F-1360/F-1361 (Lebbink research session 3)
+- **Why:** Complete inventory of Doesburg NDG (Nederduits Gereformeerd) DTB registers in GA archief 0176 was mapped by systematic minr scanning. All indexed registers confirmed:
+  - **0176_487.1**: NDG Dopen, 1615–~1638 (minr ~24864000–24867000)
+  - **0176_487.3**: NDG Dopen, 1651–~1676 (minr ~24867350–24869730)
+  - **CRITICAL GAP: ~1676–1705 — no NDG doopregister exists in digital GA inventory**
+  - **0176_487.5**: NDG Dopen, 01-02-1705–~1780 (minr 24869734–~24873300)
+  - **0176_488**: NDG Dopen, 22-10-1783–18-12-1808 (minr ~24873400–24874600)
+  - **0176_489.5**: NDG Trouwen (marriages), 1754–~1780 (minr ~24874700–24875600)
+  - **0176_490**: NDG Trouwen, 1790+ (minr ~24875800+)
+  - **0176_491**: NDG Begraven, 1804+ (minr ~24876400+)
+  - **0176_493.1**: Rooms Katholiek (Catholic) Dopen+Huwelijken, 1683+ (minr ~24879000+)
+  - **0176_494**: RC Dopen, 1802+ (minr ~24885000+)
+  Any Doesburg NDG child baptized between ~1676 and early 1705 is NOT findable in digitized records. The hypothetical Gerrit Lebbink (~1695–1705) falls squarely in this gap. WW has 0 Lebbink/Lebbing NDG entries before 1706. The physical register covering 1676-1705 may be lost, or was never created (plague years, no pastor), or exists undigitized at GA Arnhem.
+- **Record types:** DTB Dopen, DTB Trouwen, DTB Begraven — GA MAIS scan viewer
+- **Access method:** GA MAIS viewer — use `mizig=236&miadt=37&miaet=54&micode=0176_[code]&minr=[minr]&miview=ldt`. Playwright MCP works (MCP uses headed browser profile); headless playwright-cli is blocked by anti-bot.
+- **Priority:** HIGH — affects Geurt Lebbink (I0018 ancestor line)
+- **Status:** RESEARCH NOTE — gap documented, physical GA visit or contact needed to check undigitized holdings
+
 ## Bossche Protocollen 1406-1500 — Den Bosch
 
 - **URL:** https://www.bhic.nl (BHIC holdings, inv 1185-1269)

@@ -106,7 +106,8 @@ def format_search_results(data: dict) -> str:
     lines = [f"Found {n} records:\n"]
     for i, doc in enumerate(docs, 1):
         date = format_date(doc.get("eventdate"))
-        place = ", ".join(doc.get("eventplace", []))
+        ep = doc.get("eventplace", [])
+        place = ", ".join(ep) if isinstance(ep, list) else str(ep) if ep else ""
         ref = f"{doc.get('archive_code', '?')}:{doc.get('identifier', '?')}"
         lines.append(
             f"  {i}. {doc.get('eventtype', '?')} | {date} | {place} | "
