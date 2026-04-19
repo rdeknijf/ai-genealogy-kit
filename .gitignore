@@ -29,6 +29,7 @@ OPTIMIZATION*.md
 # Research images (scans, photos)
 *.png
 *.jpg
+*.jpeg
 
 # One-time correction scripts
 scripts/apply_meta_corrections.py

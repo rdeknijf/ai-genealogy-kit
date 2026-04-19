@@ -15,7 +15,10 @@ Use `scripts/openarchieven_search.py` for all searches. Do NOT construct curl co
 
 | Code | Archive | Coverage |
 |------|---------|----------|
-| `gld` | Gelders Archief | Gelderland: Apeldoorn, Arnhem, Nijmegen, Bennekom |
+| `gld` | Gelders Archief | Gelderland: Apeldoorn, Arnhem, Zutphen, Bennekom (NOT Nijmegen) |
+| `ran` | Regionaal Archief Nijmegen | Nijmegen city: BS, DTB (~1600+), bevolkingsregister, Vierdaagse |
+| `gae` | Gemeentearchief Ede | Ede, Bennekom, Lunteren: BS, bevolkingsregister, militieregisters |
+| `gab` | Gemeentearchief Barneveld | Barneveld, Voorthuizen: militieregisters 1813-1941 |
 | `nha` | Noord-Hollands Archief | Haarlem + North Holland: 12.7M records |
 | `hco` | Collectie Overijssel | Zwolle, Deventer, Kampen, Enschede: 2M+ records |
 | `ghn` | Nationaal Archief | National records, WWII CABR, colonial |
@@ -64,7 +67,8 @@ The `ref:` field in search results is the argument for `--detail`.
 
 - Omit `--archive` to search all 363M records (useful when you don't know which archive has the record)
 - Use `--period 1800-1860` to narrow by date range
-- For Gelderland: always use `--archive gld` (fastest, most complete)
+- For Gelderland: use `--archive gld` (Apeldoorn, Arnhem, Zutphen, etc.) or `--archive ran` for Nijmegen city specifically — these are two separate archives
+- Nijmegen city records are NOT in `gld`, they're in `ran` (Regionaal Archief Nijmegen)
 - For military records: `--archive nim --type Stamboek`
 - Known gap: Apeldoorn BS Geboorte is NOT fully indexed; Apeldoorn BS Huwelijk stops after Dec 1947
 - Pre-1811 church records: try `DTB Dopen`, `DTB Trouwen`, `DTB Begraven`
