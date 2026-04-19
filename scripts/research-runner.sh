@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # research-runner.sh — run autonomous research cycles
 #
-# Each iteration launches a fresh `claude -p` session that does 2-3
-# research cycles, then exits. State persists in GEDCOM + database (private/genealogy.db).
+# Each iteration launches a fresh `claude -p` session that does 1
+# research cycle, then exits. State persists in GEDCOM + database (private/genealogy.db).
 # The next session picks up where the last left off.
 #
 # Designed to be started by a babysitter Claude session that monitors
@@ -24,7 +24,7 @@ LOG_DIR="private/research/logs"
 SESSION_CEILING=80    # stop if 5h session usage exceeds this % (requires --usage-cache)
 WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this % (requires --usage-cache)
 MAX_SESSIONS=5        # default conservative; override with --sessions N
-MAX_TURNS=75          # turns per claude session (~2-3 research cycles + summary)
+MAX_TURNS=50          # turns per claude session (~1 research cycle + summary)
 SESSION_TIMEOUT=90m   # wallclock timeout per session (kill if hung)
 DRY_RUN=false
 INHIBIT_PID=""
@@ -126,23 +126,35 @@ You are running autonomous research session CYCLE_NUM.
 You have a HARD LIMIT of MAX_TURNS_VALUE tool-call turns. You CANNOT see
 the counter, so you must manage your own budget:
 
-- **Turns 1-10:** Assess (read queue, read GEDCOM, understand the task)
-- **Turns 11-50:** Lookup + Apply (archive searches, sub-agents, GEDCOM edits)
-- **Turns 51-60:** Document (write findings to DB via research_db.py, update queue status)
-- **Turns 61-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
+- **Turns 1-8:** Assess (read queue, check recent findings, understand the task)
+- **Turns 9-35:** Lookup + Apply (archive searches, sub-agents, GEDCOM edits)
+- **Turns 36-42:** Document (write findings to DB via research_db.py, update queue status)
+- **Turns 43-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
 
-If you are deep in research at turn ~50, STOP looking up new things and
+If you are deep in research at turn ~35, STOP looking up new things and
 start documenting + summarizing. An incomplete summary is far better than
 no summary at all. The next session will continue where you left off.
 
+## Previous session context
+
+PREV_SESSION_SUMMARY
+
 ## Your task
 
-Use `python scripts/research_db.py get-tasks --limit 1` to pick the highest-priority
-task. Then `python scripts/research_db.py get-person <ID>` for each person in the task
-to get current state. Do NOT work on multiple queue items in a single session.
+### Task selection
+
+1. Run `python scripts/research_db.py get-tasks --limit 3` to see available tasks.
+   This already excludes DONE and BLOCKED tasks.
+2. For each IN_PROGRESS task, run `python scripts/research_db.py search "RQ-NNN"`
+   to check what previous sessions already found. If recent findings say "all
+   digital sources exhausted" or similar dead-ends, mark it BLOCKED:
+   `python scripts/research_db.py update-task RQ-NNN --status BLOCKED --note "Digital sources exhausted, needs physical archive visit"`
+   Then pick the next task.
+3. Pick ONE task — the highest-priority QUEUED or IN_PROGRESS item with open leads.
+4. Run `python scripts/research_db.py get-person <ID>` for each person in the task.
 
 Read and follow the research skill at `.claude/skills/research/SKILL.md`.
-Run 1-2 full research cycles. Each cycle has 4 phases:
+Run 1 full research cycle with 4 phases:
 
 1. **Assess** — use `research_db.py get-tasks` and `get-person` to understand the
    task context: people IDs, current data tier, research goals, and where to look.
@@ -164,14 +176,21 @@ Run 1-2 full research cycles. Each cycle has 4 phases:
 
 4. **Document** — use `python scripts/research_db.py add-finding '<json>'` with
    finding ID, person IDs, tier, status, evidence, and archive refs.
-   Update the task via `research_db.py update-task <RQ-ID> --status DONE --note "..."`
+   Update the task status to reflect progress.
 
 ## Rules
 
 - Use `research_db.py get-tasks` and `search` to understand what's been done.
   Do NOT read FINDINGS.md or RESEARCH_QUEUE.md directly (saves ~500K tokens).
-- Pick ONE QUEUED item — don't work on multiple items per session.
-- Continue an IN_PROGRESS item if it has open leads.
+- Pick ONE task — don't work on multiple items per session.
+- **BLOCKED workflow:** If you conclude a task cannot progress without human
+  action (physical archive visit, subscription needed, family question), mark
+  it BLOCKED with a note explaining what's needed. Then pick the next task —
+  do NOT keep working a dead end.
+- **No synthesis findings:** Do NOT write findings that merely summarize or
+  synthesize what's already known. Only write findings for NEW evidence,
+  NEW records found, or NEW conclusions with specific archive references.
+  If you found nothing new, say so in the output summary — not as a finding.
 - Each cycle must make progress on the queue item (new lookups, new findings).
 - Run the GEDCOM validation script after edits (see research skill).
 - **Flag missing datasources:** if you identify a relevant archive or database
@@ -214,6 +233,7 @@ python3 scripts/research_db.py sync-from-gedcom 2>&1 | tail -4
 
 session_num=0
 total_findings=0
+prev_summary="(This is the first session — no previous context.)"
 prev_findings_count=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo 0)
 log "Starting findings count: $prev_findings_count"
 
@@ -236,9 +256,16 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     # Prepare log file
     logfile="$LOG_DIR/unattended-$(date '+%Y%m%d-%H%M%S')-session${session_num}.md"
 
-    # Substitute cycle number and max-turns into prompt
+    # Substitute cycle number, max-turns, and previous session context into prompt
     prompt="${RESEARCH_PROMPT//CYCLE_NUM/$session_num}"
     prompt="${prompt//MAX_TURNS_VALUE/$MAX_TURNS}"
+    prompt="${prompt//PREV_SESSION_SUMMARY/$prev_summary}"
+
+    # Pick the model for this session based on the next queued task's
+    # requires_model (or any linked OPEN finding's requires_model).
+    # Falls back to sonnet if no hint is set.
+    session_model=$(python3 scripts/research_db.py next-model --quiet 2>/dev/null || echo sonnet)
+    log "Session $session_num model: $session_model"
 
     # Launch claude -p with the research prompt
     # Unset session env vars to avoid "cannot nest inside another session" error
@@ -247,7 +274,7 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     timeout "$SESSION_TIMEOUT" \
         env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
         claude -p "$prompt" \
-        --model sonnet \
+        --model "$session_model" \
         --max-turns "$MAX_TURNS" \
         --output-format text \
         > "$logfile" 2>&1 \
@@ -269,6 +296,12 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     prev_findings_count="$current_findings"
     total_findings=$((total_findings + new_findings))
     log "New findings this session: $new_findings (DB total: $current_findings)"
+
+    # Extract session summary for next session's context
+    if [[ -f "$logfile" ]]; then
+        prev_summary=$({ sed -n '/^## Session Summary/,$p' "$logfile" | head -30; } 2>/dev/null || echo "(Previous session produced no summary.)")
+        [[ -z "$prev_summary" ]] && prev_summary="(Previous session produced no summary.)"
+    fi
 
     # Brief cooldown to let usage cache update
     sleep 30

@@ -122,3 +122,47 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 - **Access method:** Unknown — may be digitized scans at BHIC, transcriptions unknown
 - **Priority:** MEDIUM
 - **Status:** CANDIDATE
+
+## GA ORA Richterambt Doesburg — Protocol van opdrachten 1600-1805
+
+- **URL:** https://www.genealogiedomein.nl/digitaal-mainmenu-27/doesburg-digitale-genealogische-brongegevens/richterambt-doesburg-afbeeldingen-ora/richterambt-doesburg-afb-ora-inv-nrs-098-113
+- **Discovered:** 2026-04-11, F-1371 (RQ-014 session 5)
+- **Why:** The ORA Richterambt Doesburg inv.nrs. 098-113 covers "Protocol van opdrachten, vestenissen en andere voluntaire akten" 1600-1805. This is the only known remaining avenue for finding documentary evidence linking Gerrit Lebbing (I800011) to Geurt Lebbink as his father. Guardianship appointments (momberschap), inheritance records, and property transfers routinely name parent-child relationships. Geurt Lebbink was confirmed active in this richterambt 1707-1722. Scans are on Genealogiedomein Flickr albums but are NOT transcribed or indexed — reading requires vision AI on each scan page.
+- **Record types:** Voluntaire akten (property transfers, guardianship, wills) — ORA Richterambt Doesburg
+- **Estimated size:** 15+ inventory numbers × multiple years = potentially 1000+ pages of scans
+- **Access method:** Genealogiedomein Flickr albums (genealogiedomein skill). Browse verwijsfiche per inv.nr, extract photo IDs, resolve + read with vision.
+- **Priority:** HIGH — this is the primary remaining digital avenue for the Gerrit Lebbing brick wall
+- **Status:** CANDIDATE — no index exists; requires systematic vision scan reading
+
+## Doesburg Stad ORA — Boedels 1501-1810 (probate estates)
+
+- **URL:** https://www.genealogiedomein.nl/digitaal-mainmenu-27/doesburg-digitale-genealogische-brongegevens/oud-rechterlijk-archief-stad-items-1/193-doesburg-stad-boedels-1501-1810
+- **Discovered:** 2026-04-12, F-1405 (RQ-014 session 8)
+- **Why:** Jan Lebbink estate 1781 (inv.nr. 1723) may be Gerrit Jan Lebbing (I900224, b.1732, son of I800011). Boedel records routinely list heirs — if this is Gerrit Jan, it would confirm siblings of I500210 Fredericus and the broader family structure. Index PDF available via genealogiedomein; actual records at Gelders Archief (GA 0145, Stad Doesburg ORA).
+- **Record types:** Probate estates, orphan chamber records, testaments
+- **Estimated size:** 1501-1810, many hundreds of cases
+- **Access method:** Index PDF downloadable; actual records require GA physical access
+- **Priority:** MEDIUM — confirms family structure but won't directly resolve Gerrit's parentage
+- **Status:** CANDIDATE
+
+## ECAL — Erfgoedcentrum Achterhoek en Liemers (Doetinchem)
+
+- **URL:** https://ecal.nl/collecties/
+- **Discovered:** 2026-04-14, F-1538 (RQ-014 session 21)
+- **Why:** OpenArchieven returned a hit: ECAL toegang 3021, inv.41 — "Advocaat-fiscaal tegen Gerrit Lebbink, 1746, Doetinchem". This is a civil/fiscal prosecution of a Gerrit Lebbink in the Doetinchem area in 1746. This person may be a son of Geurt Lebbink born during the Doesburg NDG register gap (~1695-1705), and thus a sibling or cousin of I800011. ECAL covers Achterhoek archives not indexed in OpenArchieven.
+- **Record types:** ORA civil cases, DTB, notarial records, bevolkingsregister for Achterhoek region (Doetinchem, Zelhem, Aalten, Winterswijk area)
+- **Estimated size:** Large regional archive
+- **Access method:** MAIS-based catalog + online scans; some indexed in OpenArchieven; some accessible via ECAL own viewer
+- **Priority:** MEDIUM — the 1746 case could reveal Gerrit's parentage if court record states origin
+- **Status:** CANDIDATE — specific target: toegang 3021, inv.41
+
+## RHC Vecht en Venen — De Bilt, Maarssen, Woerden area (Utrecht province)
+
+- **URL:** https://rhcvechtenvenen.nl/collecties/
+- **Discovered:** 2026-04-17, F-1577 (RQ-017 session)
+- **Why:** Bevolkingsregister scans for De Bilt are in this archive (archive code `vev` in OpenArchieven). Teunis Brouwer (I0065, tuinman, De Bilt) is in their 1900–1911 bevolkingsregister (vev:60E65318). OpenArchieven indexes these records but MAIS scan access is blocked via API. A Playwright-based skill would allow viewing the actual register pages to confirm beroep (occupation) fields. Also relevant for later de Knijf family research since Jan de Knijf (I0069) was born in Woerden 1818 and Gijsbert de Knijf (I0071) died in Linschoten 1849.
+- **Record types:** Bevolkingsregister, DTB, BS Geboorte/Huwelijk/Overlijden, notarial records for De Bilt, Maarssen, Woerden, Linschoten, Vinkeveen
+- **Estimated size:** Large regional archive covering Utrecht province west
+- **Access method:** MAIS-based (same platform as many Dutch archives); partial indexing in OpenArchieven but scans need browser access
+- **Priority:** MEDIUM — needed to confirm Teunis Brouwer's tuinman occupation from bevolkingsregister scan (would upgrade F-1177 from Tier C to Tier B)
+- **Status:** CANDIDATE

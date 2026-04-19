@@ -171,13 +171,29 @@ After the runner stops:
 variables and refuses to run. The `env -u CLAUDE_CODE_SESSION -u
 CLAUDE_CODE_CONVERSATION_ID` wrapper is mandatory.
 
-### Usage cache staleness
+### Usage cache staleness — CRITICAL
 
-The `~/.cache/ccstatusline/usage.json` file is updated by an external
-process (ccstatusline) roughly every 3 minutes. It can go stale for
-extended periods. If the cache stops updating, the budget check is
-effectively disabled and the runner will keep going until something else
-stops it.
+The `~/.cache/ccstatusline/usage.json` file is updated by the main Claude
+Code session's statusline hook. `claude -p` subprocesses do **NOT** trigger
+cache updates. During unattended research, the cache freezes when the
+babysitter session is sleeping (between ScheduleWakeup intervals).
+
+**Consequences if not addressed:**
+- Runner reads stale session=100% after a 5h reset → bails immediately in
+  an infinite loop ("Already over budget. Exiting.")
+- Runner reads stale session=3% for hours → never hits session-ceiling
+
+**Workaround:** Force-refresh the cache at the start of each babysitter
+wake-up by piping minimal JSON to ccstatusline:
+
+```bash
+echo '{"workspace":{"current_dir":"/home/rdeknijf/projects/genealogy"},"model":{"id":"claude-opus-4-6","display_name":"Opus 4.6"}}' \
+  | /home/rdeknijf/.npm-global/bin/ccstatusline > /dev/null
+```
+
+This makes the babysitter's ScheduleWakeup cadence (~50 min) the effective
+cache-refresh cadence. The runner's `over_budget` check then reads
+reasonably fresh data on its next between-session check.
 
 ### pipefail + grep
 

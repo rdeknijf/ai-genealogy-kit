@@ -1,6 +1,6 @@
 # Comprehensive Dutch Genealogy Data Sources
 
-Last updated: 2026-03-24
+Last updated: 2026-04-11
 
 This document lists ALL known data sources for Dutch genealogy research beyond the
 basics already in use (OpenArchieven, WieWasWie, FamilySearch, Gelders Archief,
@@ -110,6 +110,7 @@ Legend:
 - **Contains:** Civil registration, population registers (1850-1920), DTB church records (searchable via Gelders Archief website). Local history collections.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/gemeentearchief-barneveld/SKILL.md` — Thin pointer: BS/DTB via `openarchieven-api` (`gld`), militieregisters via `gab`, notarial + bevolkingsregister via Archieval.nl (browser fallback).
 - **Relevance:** VERY HIGH. Primary archive for de Knijf family research in Barneveld.
 
 ### Gemeentearchief Ede (Municipal Archive Ede/Bennekom)
@@ -118,6 +119,7 @@ Legend:
 - **Contains:** 288,850+ records with 299,557 personal details. Archives for Ede, Bennekom, Lunteren, Otterlo, Wekerom, Harskamp, Ederveen. DTB records for Bennekom transferred here. Photos, maps, newspapers.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/gemeentearchief-ede/SKILL.md` — OpenArchieven archive code `gae` (BS, bevolkingsregister, militieregisters); Archieval.nl browser fallback for notarial.
 - **Relevance:** VERY HIGH. Primary archive for van den Hul and other Bennekom/Ede families.
 
 ### Gemeentearchief Putten (Municipal Archive Putten)
@@ -126,6 +128,7 @@ Legend:
 - **Contains:** Population registers (1850-1920), municipal government archives (1795-1939), transcribed DTB records (published by Vereniging Veluwse Geslachten), copies of Nijkerk housing data for Putten sections A-K. Razzia of Putten (October 1944) documentation.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/gemeentearchief-putten/SKILL.md` — BS via `openarchieven-api` (`gld`); PHG parentelen + DTB transcriptions + notarial PDFs + Puttensche Courant via static HTML on putten.nl.
 - **Relevance:** HIGH. Essential for Putten family research. Also contains Nijkerk cross-references.
 
 ### Erfgoedcentrum Zutphen (Heritage Centre Zutphen / Regional Archive)
@@ -158,6 +161,7 @@ Legend:
 - **Contains:** 1,300+ archives for Nijmegen, Berg en Dal, Beuningen, Druten, Heumen, Lingewaard, Wijchen, etc. Population registers (1820-1920), 70,000+ records with 500,000+ person registrations. Digital reading room.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/regionaal-archief-nijmegen/SKILL.md` — Thin pointer to `openarchieven-api` (archive code `ran`); DTB goes back to ~1600. Nijmegen city records are NOT in Gelders Archief (`gld`).
 - **Relevance:** MEDIUM. Relevant if any family lines pass through the Nijmegen area.
 
 ### Stadsarchief Delft (Erfgoed Delft)
@@ -175,7 +179,7 @@ Legend:
 - **Contains:** 6.7 million person records for Drenthe. Civil registration (1811-1974), DTB church records (1600-1811), population registers, notarial records (1810-1915), and uniquely the Maatschappij van Weldadigheid bedelaarskolonie (beggar colony) registers from Veenhuizen and Frederiksoord (1822-1866).
 - **Cost:** Free
 - **Login:** No
-- **Skill:** `.claude/skills/drents-archief.md` — Memorix Genealogy REST API
+- **Skill:** `.claude/skills/memorix/SKILL.md` — Memorix Genealogy REST API (`scripts/memorix_search.py --archive drents`)
 - **Relevance:** MEDIUM. Not in OpenArchieven. Relevant for Drenthe ancestors and bedelaarskolonie records (Christiaan Taks).
 
 ### Erfgoedcentrum Achterhoek en Liemers (ECAL)
@@ -184,6 +188,7 @@ Legend:
 - **Contains:** Archives for eastern Gelderland municipalities (Aalten, Berkelland, Bronckhorst, Doetinchem, Montferland, Oost Gelre, Oude IJsselstreek, Winterswijk). Archives, image collections, books, old newspapers. DTB/BS records flow through Gelders Archief to WieWasWie/OpenArchieven. Doesburg garrison records NOT digitized (physical visit only).
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/mais/SKILL.md` — ECAL is on the MAIS platform (`scripts/mais_search.py --archive ecal`). Also see `.claude/skills/genealogiedomein/SKILL.md` for free scans of Achterhoek DTB.
 - **Relevance:** LOW-MEDIUM. Only relevant if family lines extend into eastern Gelderland (Achterhoek).
 
 ### Collectie Overijssel (formerly Historisch Centrum Overijssel / HCO)
@@ -192,7 +197,7 @@ Legend:
 - **Contains:** 2M+ records with 7.2M person references for ALL Overijssel municipalities. Currently BS records only (Geboorte 1811+, Huwelijk 1811-1932, Overlijden 1811-1960). DTB church records (pre-1811) digitized as scans but NOT indexed by person name — indexing in progress. Covers Zwolle, Deventer, Kampen, Enschede, Almelo, Hengelo, Holten, Markelo, Goor, Rijssen, and all other Overijssel municipalities.
 - **Cost:** Free
 - **Login:** No
-- **Skill:** `.claude/skills/collectie-overijssel/` — OpenArchieven JSON API (archive_code=hco)
+- **Skill:** `.claude/skills/openarchieven-api/SKILL.md` — Archive code `hco`
 - **Relevance:** HIGH. Primary archive for Overijssel province. Needed for Knopers (Holten), Brands/Van der Bent (Kampen), and other Overijssel lines.
 
 ### Collectie Gelderland
@@ -217,7 +222,7 @@ Legend:
 - **Contains:** 12.7M+ indexed person records covering all Noord-Holland municipalities. BS (births, marriages, deaths), DTB (church baptisms), bevolkingsregister, militieregisters, notarial records, vredegerecht, memorie van successie, overlijdensverklaringen, faillissementsdossiers.
 - **Cost:** Free
 - **Login:** No
-- **Skill:** `.claude/skills/noord-hollands-archief/SKILL.md` — OpenArchieven JSON API (`archive=nha`) as primary method, MAIS URL parameters (`mivast=236`) for detail views. No browser needed.
+- **Skill:** `.claude/skills/openarchieven-api/SKILL.md` — Archive code `nha` (primary method); MAIS URL parameters (`mivast=236`) for detail views.
 - **Relevance:** HIGH. Provincial archive for Haarlem and Noord-Holland. Needed for Makkelie family research and maritime/schepelingen records.
 
 ---
@@ -230,7 +235,7 @@ Legend:
 - **Contains:** Military-historical collections from the Eighty Years' War to present. Personal files of the Royal Navy (Koninklijke Marine). Library with 70,000+ books. Growing online image database. 178,897 indexed records via OpenArchieven (Stamboeken, Persoonskaarten, POW files, decorations).
 - **Cost:** Free (visit or email inquiry)
 - **Login:** No
-- **Skill:** `.claude/skills/nimh.md` — OpenArchieven API (`archive_code=nim`)
+- **Skill:** `.claude/skills/openarchieven-api/SKILL.md` — Archive code `nim`
 - **Relevance:** HIGH if any ancestors served in the military or navy. Contact: nimh@mindef.nl
 
 ### Militieregisters.nl (Militia Records)
@@ -239,7 +244,7 @@ Legend:
 - **Contains:** Conscription records for all Dutch males aged 18+ between ~1811-1940. Name, date/place of birth, occupation, parents' names, physical description, reason for exemption, regiment assigned. 2.4 million indexed records across 20 archives.
 - **Cost:** Free
 - **Login:** No
-- **Skill:** `.claude/skills/militieregisters.md` — OpenArchieven API (`sourcetype=Militieregisters`)
+- **Skill:** `.claude/skills/openarchieven-api/SKILL.md` — `--type Militieregister` filter; Barneveld militia at `gab`, Ede militia at `gae`.
 - **Relevance:** VERY HIGH. All male ancestors in the 1811-1940 period should appear here. Excellent for finding parents' names and physical descriptions. Note: geographic gaps (no Zeeland, Groningen, Drenthe, Overijssel, Limburg).
 
 ### Nationaal Archief - Army Service Records
@@ -256,7 +261,7 @@ Legend:
 - **Contains:** 853,785 crew records from VOC qualified muster rolls (1699-1794). Name, origin, rank, ship, fate (died/returned/deserted), service dates, VOC chamber, links to original scans.
 - **Cost:** Free
 - **Login:** No
-- **Skill:** `.claude/skills/voc-opvarenden.md` — NA HUB3 JSON API
+- **Skill:** `.claude/skills/voc-opvarenden/SKILL.md` — NA HUB3 JSON API
 - **Relevance:** HIGH. Multiple Knijf/Knijff sailed as VOC soldiers/sailors. Daniel Pieterse Knijf from Woerden (1704). Note: `vocsite.nl` is ships only, `vocopvarenden.nationaalarchief.nl` is defunct.
 
 ### SSNE — Scotland's Soldiers and the Dutch Republic
@@ -265,7 +270,7 @@ Legend:
 - **Contains:** Records of Scottish soldiers and families who served in the Dutch Republic's military (~1570-1782). Scots-Dutch Brigade records. ~5,000 entries.
 - **Cost:** Free
 - **Login:** No
-- **Skill:** `.claude/skills/ssne.md` — URL-based search (no API, but curl-friendly)
+- **Skill:** `.claude/skills/ssne/SKILL.md` — URL-based search (no API, but curl-friendly)
 - **Relevance:** HIGH for Jeths/Jets line. Captain John Henderson (SSNE 8038), Lt-Col James Balfour (SSNE 8009), Col David Balfour (SSNE 8033) all found here.
 
 ---
@@ -274,19 +279,30 @@ Legend:
 
 ### Van Papier naar Digitaal (VPND)
 
-- **URL:** <https://www.vanpapiernaardotaal.nl/> (subsidiary of GeneaKnowhow)
+- **URL:** <https://www.vpnd.nl/> (hosted by GeneaKnowhow)
 - **Contains:** Images and indexes of church records (DTB: doop, trouw, begraven) and other pre-1811 sources including censuses, resident lists, and tax records. Transcriptions available.
 - **Cost:** Freemium (some content requires subscription)
 - **Login:** Required for some content
-- **Relevance:** HIGH. Critical for pre-1811 research. May have Gelderland church records not yet on other platforms.
+- **Skill:** `.claude/skills/vpnd/SKILL.md` — Static HTML + PDF browse via curl. 338K image pages + 36K transcribed index pages. Independent from Genealogiedomein.
+- **Relevance:** HIGH. Critical for pre-1811 research. Strong on Veluwe/Betuwe, NOT Achterhoek (use Genealogiedomein for Achterhoek).
 
 ### GeneaKnowhow
 
 - **URL:** <https://www.geneaknowhow.net/>
 - **Contains:** Portal/directory connecting to thousands of links for genealogical resources per province and per town in the Benelux. Includes scanned historical records.
-- **Cost:** Freemium
-- **Login:** Some content restricted
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/geneaknowhow/SKILL.md` — Static HTML router by province (`/digi/{prov}-ni.html`). Use to discover obscure hosted transcriptions that aren't indexed elsewhere. ISO-8859-1 encoding.
 - **Relevance:** HIGH. Use as a directory to find specific resources for Barneveld, Ede, Putten, Nijkerk, Woerden, etc.
+
+### Genealogiedomein.nl — Achterhoek & Liemers DTB scans
+
+- **URL:** <https://www.genealogiedomein.nl/> (scans hosted on Flickr)
+- **Contains:** J.B. Baneman's 15+ year digitiseringsproject for the Achterhoek and Liemers regions. Free scans of NH doopboek/trouwboek/begraafboek, oud rechterlijk archief, notarial, tax rolls, and cadastral maps for 40+ villages including Didam, Zeddam, Doesburg, Winterswijk, Lochem, 's-Heerenberg, Borculo. Time period ~1500-1950, focus on 1600-1811. Most records NOT indexed on OpenArchieven/WieWasWie.
+- **Cost:** Free
+- **Login:** No
+- **Skill:** `.claude/skills/genealogiedomein/SKILL.md` — HTM verwijsfiche → Flickr album ID → `/sizes/h/` resolution → static CDN JPG. Google `site:` search for discovery. Didam NH doopboek 1697-1768 fully browsable (50 scans, ~12 MB).
+- **Relevance:** VERY HIGH for Achterhoek/Liemers pre-1811. Unblocks RQ-014 Lebbing brick wall (Didam NH doopboek was previously listed as human-only action).
 
 ### Repertorium DTB (CBG)
 
@@ -326,6 +342,7 @@ Various regional archives maintain their own newspaper collections:
 - **Contains:** 1.2 million+ persons across 1,700+ Dutch cemeteries. Updated daily by volunteers. Photos of gravestones where available.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/online-begraafplaatsen/SKILL.md` — Autocomplete JSON API + form POST + HTML parsing. 1.2M+ persons, 1,700+ cemeteries.
 - **Relevance:** HIGH. Note: many Dutch graves are cleared after 20-30 years, so older ancestors may not be found. Jewish cemeteries are never cleared.
 
 ### Graftombe.nl
@@ -334,7 +351,8 @@ Various regional archives maintain their own newspaper collections:
 - **Contains:** Volunteer-photographed and indexed gravestones from various Dutch cemeteries and graveyards.
 - **Cost:** Free
 - **Login:** No
-- **Relevance:** MEDIUM. Overlaps with Online Begraafplaatsen but may have different cemeteries covered.
+- **Skill:** `.claude/skills/graftombe/SKILL.md` — HTTP GET + HTML parsing. Different cemetery coverage than online-begraafplaatsen. Includes "Familie informatie" family-grave groupings. Photos catalog-only (require Aanvraaglijst).
+- **Relevance:** MEDIUM. Overlaps with Online Begraafplaatsen but may have different cemeteries covered. Always check both sites.
 
 ### Het Stenen Archief (The Stone Archive)
 
@@ -342,6 +360,7 @@ Various regional archives maintain their own newspaper collections:
 - **Contains:** Digitally mapped Jewish cemeteries in the Netherlands. 146 cemeteries completed. Photos, names, burial dates. Includes 28,000 records from Beth Haim (oldest Jewish cemetery in NL).
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/stenen-archief/SKILL.md` — Manticoresearch XHR endpoint (`/manticoresearch.php?q=...&sort=1`) + static detail pages. Covers all 12 Dutch provinces (not just Friesland as the name suggests).
 - **Relevance:** LOW (unless researching Jewish lines). Jewish cemeteries are never cleared, so records go back centuries.
 
 ### Oorlogsgravenstichting (War Graves Foundation)
@@ -350,6 +369,7 @@ Various regional archives maintain their own newspaper collections:
 - **Contains:** Registry of all war graves of Dutch citizens, whether in the Netherlands or abroad. 180,000 registered war victims. Searchable database.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/oorlogsgravenstichting/SKILL.md` — Meilisearch HTTP JSON backend (public Bearer token). Sub-second responses with structured records incl. cemetery name, rank, unit, category, photo URL.
 - **Relevance:** HIGH for WWII-era research, especially given the Putten/Arnhem connection.
 
 ### Find a Grave / BillionGraves
@@ -592,22 +612,25 @@ Found at regional archives in the provincial capital. Types include:
 - **Contains:** Online family trees published by Dutch genealogists. Many researchers prefer this over MyHeritage for sharing Dutch trees. Integrated with Stamboom Forum.
 - **Cost:** Free basic; premium features paid
 - **Login:** Required to publish; browsing mostly free
+- **Skill:** `.claude/skills/genealogie-online/SKILL.md` — JSON Search API, no browser needed. 1,108+ Knijf person records already indexed.
 - **Relevance:** HIGH. Search for your surnames - other researchers may have published trees with overlapping family lines.
 
 ### Geneanet
 
 - **URL:** <https://en.geneanet.org/>
 - **Contains:** 9 billion individuals indexed. Family trees, photos, old books/newspapers. Strong European focus. Upload GEDCOM files.
-- **Cost:** Freemium (premium for full access)
-- **Login:** Required
-- **Relevance:** MEDIUM-HIGH. Good European database; may have Dutch family trees not on other platforms.
+- **Cost:** Freemium (free anonymous surname search, premium for full access)
+- **Login:** No (surname search); premium for hints/alerts/variants
+- **Skill:** `.claude/skills/geneanet/SKILL.md` — `playwright-cli -s=geneanet --headed --persistent` (Cloudflare blocks curl/headless). Dutch tree entries often include full civil registry source references (Toegangsnummer/Aktenummer) usable as Tier B leads for WieWasWie/MAIS verification.
+- **Relevance:** MEDIUM-HIGH. Good European database; may have Dutch family trees not on other platforms. 4,353 hits on "Lebbing" including Utrecht matches.
 
 ### Geni.com
 
 - **URL:** <https://www.geni.com/>
 - **Contains:** Collaborative world family tree with 204 million+ connected profiles. Goal is one profile per person in the "Big Tree." Dutch language community exists.
 - **Cost:** Free basic; Geni Pro paid
-- **Login:** Required
+- **Login:** No for surname search (public HTML); paid/OAuth for REST API
+- **Skill:** `.claude/skills/geni/SKILL.md` — Public curl HTML search (`search_type=people&names=...`); detail pages are Incapsula-protected so use `playwright-cli -s=geni` for those. Distinct dataset from MyHeritage despite shared ownership.
 - **Relevance:** MEDIUM. The collaborative approach means others may have already connected your family lines. Check the Dutch portal.
 
 ### Ancestry.com
@@ -654,11 +677,12 @@ Most regional archives have their own image banks:
 
 ### NIOD Institute for War, Holocaust and Genocide Studies
 
-- **URL:** <https://www.niod.nl/>
-- **Contains:** Archives, collections, and diaries related to WWII. 10.7% digitized. Research on occupation, resistance, persecution.
+- **URL:** <https://www.niod.nl/> (inventories via `www.archieven.nl/mi/298/`, NOT archives.niod.nl which does not exist)
+- **Contains:** Archives, collections, and diaries related to WWII. 10.7% digitized. Research on occupation, resistance, persecution. Includes the Erelijst van Gevallenen 1940-1945 (~18,000 indexed Dutch war victims across KNIL, Koninklijke Marine, Verzet, Koopvaardij, Landmacht).
 - **Cost:** Free
 - **Login:** No
-- **Relevance:** HIGH for WWII family research.
+- **Skill:** `.claude/skills/niod-archives/SKILL.md` — Erelijst search via Drupal views-exposed-form query params (plain HTTP). NIOD inventories via `archieven-nl` skill (MAIS Flexis platform). CABR pages are reading-room-only.
+- **Relevance:** HIGH for WWII family research. Erelijst directly surfaces Dirk van der Knijf (KNIL, Birmaspoorweg 1943) — relevant to Anton Knijf I0018 East Indies research.
 
 ### Oorlogsbronnen.nl (War Sources / Network of War Collections)
 
@@ -679,18 +703,20 @@ Most regional archives have their own image banks:
 ### Oorlog voor de Rechter (War in Court) / CABR
 
 - **URL:** <https://oorlogvoorderechter.nl/> (from 2025)
-- **Contains:** Central Archive on Special Jurisdiction (CABR): 4 km of files on 300,000+ suspected collaborators. Witness statements, NSB membership cards, diaries, pardon requests, photographs. Digitized with AI-assisted text recognition.
-- **Cost:** Free
+- **Contains:** Central Archive on Special Jurisdiction (CABR): 4 km of files on 425,000+ suspected collaborators. Witness statements, NSB membership cards, diaries, pardon requests, photographs. Opened to public online 2026-01-02. Name index online, full dossiers reading-room-only (NA Den Haag + 12 regional archives + NIOD).
+- **Cost:** Free (name index); reading-room visit for full dossiers
 - **Login:** No
+- **Skill:** `.claude/skills/cabr/SKILL.md` — Spinque REST API (`rest.spinque.com/4/oorlogvoorderechter/`). `actor_search` endpoint returns birth date/place, home location, role, NA handle. Deceased-only; Tier C confidence until in-person verification.
 - **Relevance:** MEDIUM-HIGH. Even if no family members were suspected, witness statements may mention your ancestors.
 
 ### Arolsen Archives (International Tracing Service)
 
 - **URL:** <https://arolsen-archives.org/> / <https://collections.arolsen-archives.org/>
-- **Contains:** World's most comprehensive archive on Nazi persecution victims. 50 million reference cards on 17.5 million people. Concentration camp records, forced labor documents, displaced persons files. 75-80% available online.
+- **Contains:** World's most comprehensive archive on Nazi persecution victims. 50 million reference cards on 17.5 million people (real total name index: 33.7M). Concentration camp records, forced labor documents, displaced persons files. 75-80% available online.
 - **Cost:** Free
 - **Login:** No
-- **Relevance:** HIGH. Especially for Putten razzia victims. The Stichting Oktober 44 found Putten deportee records here.
+- **Skill:** `.claude/skills/arolsen-archives/SKILL.md` — JSON-over-HTTP ASMX backend at `collections-server.arolsen-archives.org/ITS-WS.asmx/`. Session cookie is load-bearing. Verified: 18 Knijf persons incl. Cornelius KNEJF KNIJF (forced labor) and Theodorus KNIJF (Amersfoort transit camp). Scans download direct with no auth.
+- **Relevance:** HIGH. Especially for Putten razzia victims. The Stichting Oktober 44 found Putten deportee records here. Directly relevant to Herman Knijf research.
 
 ### Stichting Oktober 44 (Putten Razzia)
 
@@ -698,6 +724,7 @@ Most regional archives have their own image banks:
 - **Contains:** Database on the 589 men deported from Putten to Neuengamme concentration camp on October 1-2, 1944. Names, backgrounds, fates. Only 48 returned; 552 died.
 - **Cost:** Free
 - **Login:** No
+- **Skill:** `.claude/skills/oktober44/SKILL.md` — Static HTML via WebFetch/curl. Complements `gemeentearchief-putten` skill (which covers non-razzia Putten residents).
 - **Relevance:** VERY HIGH given the Putten connection. If any de Knijf or related families were from Putten, check this database.
 
 ### Joods Monument (Jewish Monument)

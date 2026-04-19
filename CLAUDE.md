@@ -43,6 +43,27 @@ The research state is stored in a local SQLite database at `private/genealogy.db
 | `sync-from-gedcom` | Refresh persons/families/sources from tree.ged |
 | `sync-to-markdown` | Regenerate FINDINGS.md + RESEARCH_QUEUE.md from DB |
 | `rebuild-research-state [--person ID]` | Recompute summaries |
+| `add-task --title T --model M [...]` | Add a queue item (requires `--model`) |
+| `set-model ID --model opus\|sonnet\|haiku\|none` | Tag a finding or task with a model hint |
+| `next-model [--quiet]` | Print the model to use for the next session |
+| `validate [--strict]` | Flag active tasks missing a `requires_model` hint |
+
+### Model routing
+
+Every new queue item MUST declare `requires_model` (enforced by `add-task`).
+Findings can also be tagged via `set-model F-NNN --model opus` when the
+*next step* on a specific finding needs deeper reasoning. The research
+runner calls `next-model` before each session and launches `claude -p`
+with that model.
+
+Pick `opus` for: multi-source synthesis, ambiguous evidence weighing,
+hypothesis construction, tree-structure corrections. Pick `sonnet` for:
+archive lookups, record extraction, routine cross-referencing (the
+default for most work).
+
+Future: expand into `--work-type` (lookup / synthesis / decoding /
+tree-edit) and `--complexity` (low / medium / high) so model + role can
+be inferred instead of hand-declared.
 
 ## Data Integrity — CRITICAL
 
@@ -93,7 +114,10 @@ Tiers are derived from GEDCOM source citations and database overrides.
 1. **Get Next Task** — `python scripts/research_db.py get-tasks`
 2. **Get Context** — `python scripts/research_db.py get-person <ID>` for each person in the task.
 3. **Verify** — search archives, look up birth, marriage, and death records.
-4. **Document** — `python scripts/research_db.py add-finding`
+4. **Document** — `python scripts/research_db.py add-finding '<JSON>'`
+   **CRITICAL**: JSON MUST include `"persons":["I####"]` with the GEDCOM IDs
+   of all persons the finding relates to. Without this, the finding won't be
+   linked and won't appear on fan charts or in research states.
 5. **Update Queue** — `python scripts/research_db.py update-task <RQ-ID> --status DONE --note "Found birth record..."`
 6. **Apply** — edit GEDCOM ONLY for Tier A/B evidence.
 

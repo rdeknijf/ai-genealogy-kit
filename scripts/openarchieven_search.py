@@ -43,6 +43,9 @@ ARCHIVES = {
     "raa": "Regionaal Archief Alkmaar",
     "gar": "Gemeentearchief Rotterdam",
     "saa": "Stadsarchief Amsterdam (via OA)",
+    "ran": "Regionaal Archief Nijmegen — Nijmegen city: BS, DTB, bevolkingsregister, Vierdaagse",
+    "gae": "Gemeentearchief Ede — Ede, Bennekom, Lunteren: BS, bevolkingsregister, militieregisters",
+    "gab": "Gemeentearchief Barneveld — Barneveld, Voorthuizen: militieregisters 1813-1941",
 }
 
 
@@ -120,16 +123,26 @@ def format_search_results(data: dict) -> str:
 def format_detail(data: dict) -> str:
     lines = []
 
-    # Persons and their roles
+    # Persons and their roles — API returns dict for single items, list for multiple
     persons = data.get("Person", [])
+    if isinstance(persons, dict):
+        persons = [persons]
     relations = data.get("RelationEP", [])
+    if isinstance(relations, dict):
+        relations = [relations]
     role_map = {r["PersonKeyRef"]: r.get("RelationType", "?") for r in relations}
 
     event = data.get("Event", {})
     lines.append(f"Event: {event.get('EventType', '?')}")
     lines.append(f"Date: {format_date(event.get('EventDate'))}")
     ep = event.get("EventPlace", {})
-    lines.append(f"Place: {ep.get('Place', '?')}")
+    if isinstance(ep, list):
+        place = ", ".join(e.get("Place", "?") for e in ep if isinstance(e, dict))
+    elif isinstance(ep, dict):
+        place = ep.get("Place", "?")
+    else:
+        place = str(ep) if ep else "?"
+    lines.append(f"Place: {place}")
     lines.append("")
 
     lines.append("Persons:")

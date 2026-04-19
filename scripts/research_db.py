@@ -91,19 +91,175 @@ def output(data):
 
 def cmd_get_tasks(args):
     db = get_db(args.db)
-    query = "SELECT id, title, priority, status, people_ids, goal FROM research_tasks"
+    query = (
+        "SELECT id, title, priority, status, people_ids, goal, requires_model "
+        "FROM research_tasks"
+    )
     params = []
     if args.status:
         query += " WHERE status = ?"
         params.append(args.status)
     else:
-        query += " WHERE status != 'DONE'"
+        query += " WHERE status NOT IN ('DONE', 'BLOCKED')"
     query += " ORDER BY priority ASC, id ASC LIMIT ?"
     params.append(args.limit)
 
     tasks = [dict(r) for r in db.execute(query, params).fetchall()]
+
+    # Promote a model hint from any OPEN linked finding if the task itself
+    # has none. Linkage is via findings.queue_ref = research_tasks.id.
+    for task in tasks:
+        if task.get("requires_model"):
+            continue
+        row = db.execute(
+            "SELECT requires_model FROM findings "
+            "WHERE queue_ref = ? AND status = 'OPEN' "
+            "AND requires_model IS NOT NULL LIMIT 1",
+            (task["id"],),
+        ).fetchone()
+        if row:
+            task["requires_model"] = row["requires_model"]
+
     output(tasks)
     db.close()
+
+
+MODEL_RANK = {"haiku": 0, "sonnet": 1, "opus": 2}
+
+
+def cmd_next_model(args):
+    """Return the model to use for the next research session.
+
+    Picks the highest-priority non-terminal task. Uses task.requires_model
+    as the base, then escalates if any linked OPEN finding has a higher
+    model rank (opus > sonnet > haiku). Falls back to --default if
+    nothing is set."""
+    db = get_db(args.db)
+    default = args.default
+
+    top = db.execute(
+        "SELECT id, requires_model FROM research_tasks "
+        "WHERE status NOT IN ('DONE', 'BLOCKED') "
+        "ORDER BY priority ASC, id ASC LIMIT 1"
+    ).fetchone()
+
+    if not top:
+        result = {"model": default, "reason": f"no active tasks, default={default}"}
+    else:
+        model = top["requires_model"] or default
+        reason = (
+            f"task {top['id']} requires {model}"
+            if top["requires_model"]
+            else f"task {top['id']} unset, default={default}"
+        )
+        escalation = db.execute(
+            "SELECT id, requires_model FROM findings "
+            "WHERE queue_ref = ? AND status = 'OPEN' AND requires_model IS NOT NULL",
+            (top["id"],),
+        ).fetchall()
+        for r in escalation:
+            if MODEL_RANK.get(r["requires_model"], -1) > MODEL_RANK.get(model, -1):
+                model = r["requires_model"]
+                reason = f"finding {r['id']} escalates task {top['id']} to {model}"
+        result = {"model": model, "reason": reason}
+
+    if args.quiet:
+        print(result["model"])
+    else:
+        output(result)
+    db.close()
+
+
+def cmd_set_model(args):
+    """Set or clear requires_model on a finding (F-NNN) or task (RQ-NNN)."""
+    db = get_db(args.db)
+    table = "findings" if args.id.startswith("F-") else "research_tasks"
+    value = None if args.model == "none" else args.model
+    cur = db.execute(
+        f"UPDATE {table} SET requires_model = ?, updated_at = datetime('now') WHERE id = ?",
+        (value, args.id),
+    )
+    db.commit()
+    updated = cur.rowcount
+    db.close()
+    print(json.dumps({"id": args.id, "requires_model": value, "updated": updated}))
+
+
+ALLOWED_MODELS = {"opus", "sonnet", "haiku"}
+
+
+def cmd_add_task(args):
+    """Add a new research queue item. Requires --model.
+
+    Rationale: every new queue item must declare what model it needs so the
+    runner can route it. Later this may expand into --work-type and
+    --complexity from which model + role can be inferred.
+    """
+    if args.model not in ALLOWED_MODELS:
+        print(
+            json.dumps(
+                {"error": f"--model must be one of {sorted(ALLOWED_MODELS)}, got {args.model!r}"}
+            )
+        )
+        sys.exit(1)
+
+    db = get_db(args.db)
+    tid = args.id
+    if not tid:
+        row = db.execute(
+            "SELECT id FROM research_tasks WHERE id LIKE 'RQ-%' ORDER BY "
+            "CAST(REPLACE(id, 'RQ-', '') AS INTEGER) DESC LIMIT 1"
+        ).fetchone()
+        num = int(row["id"].replace("RQ-", "")) + 1 if row else 1
+        tid = f"RQ-{num:03d}"
+
+    raw = args.raw_markdown or (
+        f"## {tid}: {args.title}\n\n"
+        f"- **Priority:** {args.priority}\n"
+        f"- **Status:** {args.status}\n"
+        f"- **Model:** {args.model}\n"
+        + (f"- **People:** {args.people}\n" if args.people else "")
+        + (f"\n**Goal:** {args.goal}\n" if args.goal else "")
+    )
+
+    db.execute(
+        "INSERT INTO research_tasks (id, title, priority, status, people_ids, goal, "
+        "where_to_look, raw_markdown, requires_model) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (
+            tid,
+            args.title,
+            args.priority,
+            args.status,
+            args.people or "",
+            args.goal or "",
+            args.where_to_look or "",
+            raw,
+            args.model,
+        ),
+    )
+    db.commit()
+    db.close()
+    print(json.dumps({"id": tid, "requires_model": args.model, "status": "created"}))
+
+
+def cmd_validate(args):
+    """Check DB invariants. Currently: every non-terminal task must declare a model."""
+    db = get_db(args.db)
+    missing = db.execute(
+        "SELECT id, title FROM research_tasks "
+        "WHERE status NOT IN ('DONE', 'BLOCKED') AND requires_model IS NULL "
+        "ORDER BY priority ASC, id ASC"
+    ).fetchall()
+    db.close()
+
+    result = {
+        "tasks_missing_model": [dict(r) for r in missing],
+        "ok": len(missing) == 0,
+    }
+    output(result)
+    if args.strict and missing:
+        sys.exit(1)
 
 
 def cmd_get_person(args):
@@ -236,7 +392,7 @@ def cmd_add_finding(args):
     # Build raw_markdown if not provided
     if not data.get("raw_markdown"):
         parts = [f"## {fid}: {data.get('title', '')}"]
-        person_ids = data.get("person_ids", [])
+        person_ids = data.get("person_ids") or data.get("persons") or []
         if isinstance(person_ids, str):
             person_ids = [p.strip() for p in person_ids.split(",") if p.strip()]
 
@@ -275,14 +431,17 @@ def cmd_add_finding(args):
         ),
     )
 
-    # Link persons
-    person_ids = data.get("person_ids", [])
+    # Link persons — accept both "person_ids" and "persons" keys
+    person_ids = data.get("person_ids") or data.get("persons") or []
     if isinstance(person_ids, str):
         person_ids = [p.strip() for p in person_ids.split(",") if p.strip()]
     # Also extract from raw_markdown
     if not person_ids:
         person_ids = list(set(re.findall(r"\(I\d+\)", data["raw_markdown"])))
         person_ids = [p.strip("()") for p in person_ids]
+
+    if not person_ids:
+        print(f"WARNING: Finding {fid} has no linked persons. Use 'person_ids' or 'persons' in JSON.", file=sys.stderr)
 
     for pid in person_ids:
         db.execute(
@@ -292,7 +451,7 @@ def cmd_add_finding(args):
 
     db.commit()
     db.close()
-    print(json.dumps({"id": fid, "status": "created"}))
+    print(json.dumps({"id": fid, "persons_linked": len(person_ids), "status": "created"}))
 
 
 def cmd_update_task(args):
@@ -530,6 +689,41 @@ def main():
     # rebuild-research-state
     p = subparsers.add_parser("rebuild-research-state", help="Recompute person research summaries")
     p.add_argument("--person", help="Single person ID for incremental rebuild")
+
+    # next-model
+    p = subparsers.add_parser(
+        "next-model",
+        help="Return the model hint for the next session (opus/sonnet)",
+    )
+    p.add_argument("--default", default="sonnet", help="Fallback model (default: sonnet)")
+    p.add_argument("--quiet", action="store_true", help="Print just the model name")
+
+    # set-model
+    p = subparsers.add_parser("set-model", help="Set requires_model on a finding or task")
+    p.add_argument("id", help="F-NNN or RQ-NNN")
+    p.add_argument("--model", required=True, help="Model name (opus/sonnet) or 'none' to clear")
+
+    # add-task — requires --model
+    p = subparsers.add_parser(
+        "add-task",
+        help="Add a new research queue item (requires --model)",
+    )
+    p.add_argument("--id", help="Task ID (auto-generated if omitted)")
+    p.add_argument("--title", required=True)
+    p.add_argument("--model", required=True, help="opus | sonnet | haiku")
+    p.add_argument("--priority", type=int, default=5)
+    p.add_argument("--status", default="QUEUED")
+    p.add_argument("--people", help="Comma-separated person IDs", default="")
+    p.add_argument("--goal", help="Goal description", default="")
+    p.add_argument("--where-to-look", help="Archive hints", default="")
+    p.add_argument("--raw-markdown", help="Full markdown body (optional; auto-built if omitted)")
+
+    # validate — flag tasks missing a model hint
+    p = subparsers.add_parser(
+        "validate",
+        help="Check that every active task has requires_model set",
+    )
+    p.add_argument("--strict", action="store_true", help="Exit non-zero on violations")
 
     args = parser.parse_args()
     cmd = args.command.replace("-", "_")
