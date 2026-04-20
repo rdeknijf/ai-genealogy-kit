@@ -253,8 +253,10 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
         log "--- Session $session_num/$MAX_SESSIONS ---"
     fi
 
-    # Prepare log file
+    # Prepare log file (raw stream-json + post-processed markdown)
     logfile="$LOG_DIR/unattended-$(date '+%Y%m%d-%H%M%S')-session${session_num}.md"
+    jsonlfile="${logfile%.md}.jsonl"
+    session_started_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
     # Substitute cycle number, max-turns, and previous session context into prompt
     prompt="${RESEARCH_PROMPT//CYCLE_NUM/$session_num}"
@@ -270,20 +272,33 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     # Launch claude -p with the research prompt
     # Unset session env vars to avoid "cannot nest inside another session" error
     # timeout kills hung sessions (e.g. stuck sub-agents or browser calls)
+    # stream-json captures every tool call so failed sessions leave a trace
     exit_code=0
     timeout "$SESSION_TIMEOUT" \
         env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
         claude -p "$prompt" \
         --model "$session_model" \
         --max-turns "$MAX_TURNS" \
-        --output-format text \
-        > "$logfile" 2>&1 \
+        --output-format stream-json \
+        --verbose \
+        > "$jsonlfile" 2>&1 \
         || exit_code=$?
     if [[ $exit_code -eq 124 ]]; then
         log "Session $session_num TIMED OUT after $SESSION_TIMEOUT"
     fi
 
-    log "Session $session_num complete. Log: $logfile"
+    # Post-process stream-json into human-readable markdown and log task_runs row
+    if [[ -s "$jsonlfile" ]]; then
+        python3 scripts/parse_session_log.py "$jsonlfile" \
+            --log-run --started-at "$session_started_at" \
+            > "$logfile" 2>/dev/null || echo "Error: parse failed" > "$logfile"
+    else
+        echo "Error: empty stream-json output (timeout=$exit_code)" > "$logfile"
+    fi
+
+    picked_task=$(grep -oP 'Task picked: `\KRQ-\d+' "$logfile" | head -1 || echo "?")
+    exit_reason=$(grep -oP 'Exit: `\K[^`]+' "$logfile" | head -1 || echo "?")
+    log "Session $session_num complete. Task: ${picked_task:-?}, Exit: ${exit_reason:-?}. Log: $logfile"
 
     # Count new findings from DB (authoritative) and session log (backup)
     current_findings=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo "$prev_findings_count")
