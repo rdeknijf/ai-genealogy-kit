@@ -100,7 +100,7 @@ def cmd_get_tasks(args):
         query += " WHERE status = ?"
         params.append(args.status)
     else:
-        query += " WHERE status NOT IN ('DONE', 'BLOCKED')"
+        query += " WHERE status NOT IN ('DONE', 'BLOCKED', 'SUPERSEDED')"
     query += " ORDER BY priority ASC, id ASC LIMIT ?"
     params.append(args.limit)
 
@@ -139,7 +139,7 @@ def cmd_next_model(args):
 
     top = db.execute(
         "SELECT id, requires_model FROM research_tasks "
-        "WHERE status NOT IN ('DONE', 'BLOCKED') "
+        "WHERE status NOT IN ('DONE', 'BLOCKED', 'SUPERSEDED') "
         "ORDER BY priority ASC, id ASC LIMIT 1"
     ).fetchone()
 
@@ -248,7 +248,7 @@ def cmd_validate(args):
     db = get_db(args.db)
     missing = db.execute(
         "SELECT id, title FROM research_tasks "
-        "WHERE status NOT IN ('DONE', 'BLOCKED') AND requires_model IS NULL "
+        "WHERE status NOT IN ('DONE', 'BLOCKED', 'SUPERSEDED') AND requires_model IS NULL "
         "ORDER BY priority ASC, id ASC"
     ).fetchall()
     db.close()
