@@ -166,3 +166,25 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 - **Access method:** MAIS-based (same platform as many Dutch archives); partial indexing in OpenArchieven but scans need browser access
 - **Priority:** MEDIUM — needed to confirm Teunis Brouwer's tuinman occupation from bevolkingsregister scan (would upgrade F-1177 from Tier C to Tier B)
 - **Status:** CANDIDATE
+
+## AlleGroningers — Groninger Archieven indexed DTB + BS
+
+- **URL:** https://www.allegroningers.nl
+- **Discovered:** 2026-04-20, F-1655 (RQ-016 session 5)
+- **Why:** WieWasWie returns indexed DTB hits for Groningen (e.g., 14 Eildert Remmers baptisms in Bellingwolde/Appingedam) but `--detail` fails ("Detail not available"), so parents and scan links require the AlleGroningers portal. Needed to trace Eijldert Remmers (I600044, Remmers/Veltkamp line) from Groningen to Zutphen 1764. Likely useful for any Groningen ancestry (Bellingwolde, Appingedam, Winschoten, Groningen city) — all under-served by existing skills.
+- **Record types:** DTB Dopen/Trouwen/Begraven, BS Geboorte/Huwelijk/Overlijden, lidmaten, notarial (post-1811)
+- **Estimated size:** ~25M indexed records
+- **Access method:** Memorix-based portal (same family as Erfgoed Delft / NHA) — check for JSON API endpoint; fallback Playwright
+- **Priority:** MEDIUM
+- **Status:** CANDIDATE
+
+## Stadsarchief Dordrecht (SAD/RAD) — Dordrecht region BS + bevolkingsregister
+
+- **URL:** https://www.stadsarchiefinzicht.nl / https://hdstadsarchief.nl/
+- **Discovered:** 2026-04-21, F-1667 (RQ-012 session 6)
+- **Why:** Zwijndrecht BS records (births, marriages, deaths) exist in WieWasWie but the `--detail` command fails for all records in this collection — they are scan-only with no structured API data. Needed for: (1) Maartje Bakker (~1905-1912) birth record + parents (she married Willem van der Ven 17-12-1931 in Zwijndrecht); (2) 1898 Servaas van der Ven x Pietertje Baan marriage record (to confirm parents of both); (3) Bertus Los and Pietertje van der Ven birth records (~1930s, privacy-restricted until ~2030-2040). OpenArchieven archive code `sad` maps to Belgian data (incorrect), so OA API also fails for this archive. The Stadsarchief Dordrecht website (Stadsarchiefinzicht) has a direct viewer for scanned records.
+- **Record types:** BS Geboorte/Huwelijk/Overlijden, bevolkingsregister, DTB for Dordrecht, Zwijndrecht, Hendrik Ido Ambacht, Alblasserdam, Hardinxveld, Papendrecht, and surrounding Drechtsteden municipalities
+- **Estimated size:** Large regional archive; full Drechtsteden coverage
+- **Access method:** Stadsarchiefinzicht.nl viewer (browser-based); requires Playwright. Some records also available via www.hoogheemraadschap.nl en Erfgoed Dordrecht portals.
+- **Priority:** HIGH — blocking Maartje Bakker parents lookup (I900527) and multiple Zwijndrecht family lines in RQ-012
+- **Status:** CANDIDATE
