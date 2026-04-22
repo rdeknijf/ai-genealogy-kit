@@ -101,9 +101,13 @@ d. **Flag discrepancies** — if a record contradicts the GEDCOM, flag it
 
 ### 4. Apply verified data
 
-- Tier A/B findings -> edit GEDCOM with source citation (after user review)
-- Tier C findings -> add to research DB via `research_db.py add-finding`
-- Discrepancies -> discuss with user before any edit
+**This step is mandatory — skip it and the fan chart stays gray.**
+
+- Tier A/B findings → edit GEDCOM with source citation. In autonomous sessions,
+  apply directly (no user review needed for Tier B indexed civil records).
+  Without GEDCOM edits, hardening work is invisible on the fan chart.
+- Tier C findings ��� add to research DB only
+- Discrepancies → discuss with user before any edit
 
 ### 5. Report the hardening status
 

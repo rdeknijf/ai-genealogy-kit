@@ -96,6 +96,8 @@ Project-local skills exist for each source — see `.claude/skills/`.
 - Cross-reference multiple independent sources before flagging changes.
 - Track all findings in the database with tier and status.
 - Check `private/research/HUMAN_ACTIONS.md` for things only Rutger can do (archive visits, subscriptions, family questions) — never duplicate these as AI tasks.
+- Check `research/DATASOURCE_CANDIDATES.md` for datasources flagged by research agents
+  that don't have skills yet. When onboarding new skills, start here.
 
 ### Fan Chart — Research Verification Status
 
@@ -111,6 +113,10 @@ Tiers are derived from GEDCOM source citations and database overrides.
 
 ## Research Workflow — Harden First, Then Extend
 
+Never extend a line (add earlier ancestors) when the existing connection is unverified.
+Extending from wrong data wastes effort and produces a false tree. If a line's foundation
+is Tier C/D, harden it to Tier B first — or mark the extension task BLOCKED.
+
 1. **Get Next Task** — `python scripts/research_db.py get-tasks`
 2. **Get Context** — `python scripts/research_db.py get-person <ID>` for each person in the task.
 3. **Verify** — search archives, look up birth, marriage, and death records.
@@ -120,6 +126,9 @@ Tiers are derived from GEDCOM source citations and database overrides.
    linked and won't appear on fan charts or in research states.
 5. **Update Queue** — `python scripts/research_db.py update-task <RQ-ID> --status DONE --note "Found birth record..."`
 6. **Apply** — edit GEDCOM ONLY for Tier A/B evidence.
+7. **Re-evaluate queue** — after onboarding new datasource skills, check BLOCKED
+   tasks: `python scripts/research_db.py get-tasks --status BLOCKED`. If a blocked
+   task cited "no skill for region X" and a skill now exists, unblock it.
 
 ### Sub-agents for parallel verification
 
@@ -130,7 +139,7 @@ findings with archive references.
 
 ### Browser automation via playwright-cli
 
-Most archive skills (12/18) now use HTTP APIs and don't need a browser.
+Most archive skills use HTTP APIs or Python wrapper scripts and don't need a browser.
 For the remaining browser-dependent archives (FamilySearch, MyHeritage,
 erfgoed-s-hertogenbosch, rhc-rijnstreek), use `playwright-cli` via Bash.
 
@@ -198,7 +207,7 @@ and fail on JavaScript-rendered archive pages.
 ### Prefer API over browser
 
 Always prefer HTTP API access over Playwright browser automation — APIs are
-10-50x faster. Most archive skills (12/18+) already use APIs. When creating
+10-50x faster. Most archive skills already use APIs. When creating
 or updating datasource skills, check for API endpoints first. Only fall back
 to Playwright when no API exists.
 

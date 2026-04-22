@@ -136,6 +136,10 @@ lookup cycles on records that won't be publicly available online.
 3. Great-great-great-grandparents (gen 5) — extending the tree
 4. Beyond — only after closer generations are solid
 
+**Gate check:** Before extending any line beyond gen 4, verify the existing
+chain is Tier B or better. If not, create a hardening task and skip the
+extension. Extending from unverified ancestors produces false discoveries.
+
 **Within a generation**, prioritize:
 
 - Missing death/birth DATES over missing sources on known dates
