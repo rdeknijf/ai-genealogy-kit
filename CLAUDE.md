@@ -47,6 +47,9 @@ The research state is stored in a local SQLite database at `private/genealogy.db
 | `set-model ID --model opus\|sonnet\|haiku\|none` | Tag a finding or task with a model hint |
 | `next-model [--quiet]` | Print the model to use for the next session |
 | `validate [--strict]` | Flag active tasks missing a `requires_model` hint |
+| `coverage-score [--gedcom PATH] [--quiet]` | Weighted research coverage percentage |
+| `add-negative --person ID --source S --fingerprint F --result R` | Record a failed search |
+| `check-negatives ID [--source S]` | List negative searches for a person |
 
 ### Model routing
 
