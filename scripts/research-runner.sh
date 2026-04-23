@@ -183,6 +183,10 @@ Run 1 full research cycle with 4 phases:
 - Use `research_db.py get-tasks` and `search` to understand what's been done.
   Do NOT read FINDINGS.md or RESEARCH_QUEUE.md directly (saves ~500K tokens).
 - Pick ONE task — don't work on multiple items per session.
+- **Negative search tracking — MANDATORY**: Before any archive lookup, check
+  `research_db.py check-negatives <person_id>`. After any failed lookup,
+  record it with `research_db.py add-negative`. This prevents wasting turns
+  retrying known dead ends.
 - **BLOCKED workflow:** If you conclude a task cannot progress without human
   action (physical archive visit, subscription needed, family question), mark
   it BLOCKED with a note explaining what's needed. Then pick the next task —
@@ -224,18 +228,36 @@ are running low on turns. Format:
 
 ### Missing datasources
 [any flagged, or "none"]
+
+### Structured state (MANDATORY — the runner parses this)
+<!-- STATE_JSON
+{
+    "current_task": "RQ-NNN",
+    "persons_completed": ["Ixxxx"],
+    "persons_blocked": {"Ixxxx": "reason"},
+    "leads_to_pursue": [{"person": "Ixxxx", "source": "archive", "hint": "what to try"}],
+    "findings_added": ["F-NNN"]
+}
+STATE_JSON -->
 PROMPT
 
 # --- Main loop ---
+# Run idempotent schema migration (adds negative_searches, coverage columns, etc.)
+log "Running schema migration..."
+python3 scripts/migrate_v2.py 2>&1 | { grep -v "Already" || true; }
+
 # Sync GEDCOM to DB before starting
 log "Syncing GEDCOM to research database..."
 python3 scripts/research_db.py sync-from-gedcom 2>&1 | tail -4
 
 session_num=0
 total_findings=0
-prev_summary="(This is the first session — no previous context.)"
+STATE_FILE="private/research/session_state.json"
+HEARTBEAT_FILE="$LOG_DIR/heartbeat.json"
 prev_findings_count=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo 0)
 log "Starting findings count: $prev_findings_count"
+run_coverage=$(python3 scripts/research_db.py coverage-score --gedcom private/tree.ged --quiet 2>/dev/null || echo "?")
+log "Starting coverage: ${run_coverage}%"
 
 while [[ $session_num -lt $MAX_SESSIONS ]]; do
     session_num=$((session_num + 1))
@@ -258,10 +280,25 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     jsonlfile="${logfile%.md}.jsonl"
     session_started_at="$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
 
-    # Substitute cycle number, max-turns, and previous session context into prompt
+    # Substitute cycle number and max-turns into prompt
     prompt="${RESEARCH_PROMPT//CYCLE_NUM/$session_num}"
     prompt="${prompt//MAX_TURNS_VALUE/$MAX_TURNS}"
-    prompt="${prompt//PREV_SESSION_SUMMARY/$prev_summary}"
+
+    # Read structured state file for session context (replaces prose summary)
+    if [[ -f "$STATE_FILE" ]]; then
+        state_context=$(PYTHONPATH=scripts python3 -c "
+from session_state import load_state, format_for_prompt
+from pathlib import Path
+state = load_state(Path('$STATE_FILE'))
+print(format_for_prompt(state))
+" 2>/dev/null || echo "(No previous session state available.)")
+    else
+        state_context="(This is the first session — no previous context.)"
+    fi
+    prompt="${prompt//PREV_SESSION_SUMMARY/$state_context}"
+
+    # Measure coverage before session
+    coverage_before=$(python3 scripts/research_db.py coverage-score --gedcom private/tree.ged --quiet 2>/dev/null || echo "")
 
     # Pick the model for this session based on the next queued task's
     # requires_model (or any linked OPEN finding's requires_model).
@@ -269,28 +306,39 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     session_model=$(python3 scripts/research_db.py next-model --quiet 2>/dev/null || echo sonnet)
     log "Session $session_num model: $session_model"
 
-    # Launch claude -p with the research prompt
-    # Unset session env vars to avoid "cannot nest inside another session" error
-    # timeout kills hung sessions (e.g. stuck sub-agents or browser calls)
-    # stream-json captures every tool call so failed sessions leave a trace
+    # Launch claude -p piped through the live stream parser
+    # The parser writes the .jsonl file, updates heartbeat.json every 60s,
+    # and kills stuck sessions (>5 consecutive identical tool calls)
     exit_code=0
-    timeout "$SESSION_TIMEOUT" \
+    timeout "$SESSION_TIMEOUT" bash -c '
         env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
-        claude -p "$prompt" \
-        --model "$session_model" \
-        --max-turns "$MAX_TURNS" \
+        claude -p "$1" \
+        --model "$2" \
+        --max-turns "$3" \
         --output-format stream-json \
         --verbose \
-        > "$jsonlfile" 2>&1 \
+        2>&1 \
+        | python3 scripts/parse_session_stream.py \
+            --output "$4" \
+            --heartbeat-file "$5" \
+            --heartbeat-interval 60 \
+            --kill-on-stuck 5
+    ' _ "$prompt" "$session_model" "$MAX_TURNS" "$jsonlfile" "$HEARTBEAT_FILE" \
         || exit_code=$?
     if [[ $exit_code -eq 124 ]]; then
         log "Session $session_num TIMED OUT after $SESSION_TIMEOUT"
     fi
 
+    # Measure coverage after session (before parse, so we can pass to log_run)
+    coverage_after=$(python3 scripts/research_db.py coverage-score --gedcom private/tree.ged --quiet 2>/dev/null || echo "")
+
     # Post-process stream-json into human-readable markdown and log task_runs row
+    coverage_args=""
+    [[ -n "$coverage_before" ]] && coverage_args="$coverage_args --coverage-before $coverage_before"
+    [[ -n "$coverage_after" ]] && coverage_args="$coverage_args --coverage-after $coverage_after"
     if [[ -s "$jsonlfile" ]]; then
         python3 scripts/parse_session_log.py "$jsonlfile" \
-            --log-run --started-at "$session_started_at" \
+            --log-run --started-at "$session_started_at" $coverage_args \
             > "$logfile" 2>/dev/null || echo "Error: parse failed" > "$logfile"
     else
         echo "Error: empty stream-json output (timeout=$exit_code)" > "$logfile"
@@ -312,10 +360,80 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     total_findings=$((total_findings + new_findings))
     log "New findings this session: $new_findings (DB total: $current_findings)"
 
-    # Extract session summary for next session's context
+    # Auto-block stalled tasks: if the last 2 runs on the same task each produced ≤1 finding,
+    # mark the task BLOCKED. Uses task_runs table instead of bash variables for robustness.
+    if [[ "$picked_task" != "?" ]]; then
+        stall_count=$(python3 -c "
+import sqlite3, json
+db = sqlite3.connect('private/genealogy.db')
+db.execute('PRAGMA busy_timeout = 5000')
+runs = db.execute(
+    'SELECT task_id, summary FROM task_runs WHERE task_id = ? ORDER BY id DESC LIMIT 2',
+    ('$picked_task',)
+).fetchall()
+if len(runs) >= 2:
+    # Count findings mentioned in each run's summary (F-NNN pattern)
+    import re
+    low = sum(1 for _, s in runs if len(re.findall(r'F-\d{3,4}', s or '')) <= 1)
+    print(low)
+else:
+    print(0)
+db.close()
+" 2>/dev/null || echo 0)
+        if [[ "$stall_count" -ge 2 ]]; then
+            log "Auto-blocking $picked_task: 2 consecutive sessions with ≤1 finding"
+            python3 scripts/research_db.py update-task "$picked_task" \
+                --status BLOCKED \
+                --note "Auto-blocked by runner: 2 consecutive low-yield sessions on $(date '+%Y-%m-%d')" \
+                2>/dev/null || true
+            # Clear current_task in state file so next session picks a new task
+            if [[ -f "$STATE_FILE" ]]; then
+                PYTHONPATH=scripts python3 -c "
+from pathlib import Path
+from session_state import load_state, save_state
+s = load_state(Path('$STATE_FILE'))
+s.pop('current_task', None)
+s['session_count_on_task'] = 0
+save_state(Path('$STATE_FILE'), s)
+" 2>/dev/null || true
+            fi
+        fi
+    fi
+
+    # Log coverage delta
+    if [[ -n "$coverage_before" && -n "$coverage_after" ]]; then
+        log "Coverage: ${coverage_before}% → ${coverage_after}%"
+    fi
+
+    # Extract structured state from session output and merge into state file
     if [[ -f "$logfile" ]]; then
-        prev_summary=$({ sed -n '/^## Session Summary/,$p' "$logfile" | head -30; } 2>/dev/null || echo "(Previous session produced no summary.)")
-        [[ -z "$prev_summary" ]] && prev_summary="(Previous session produced no summary.)"
+        PYTHONPATH=scripts python3 -c "
+from pathlib import Path
+from session_state import load_state, save_state, merge_state, extract_state_from_log
+
+state_path = Path('$STATE_FILE')
+existing = load_state(state_path)
+
+# Extract STATE_JSON from session log
+log_text = Path('$logfile').read_text()
+session_update = extract_state_from_log(log_text)
+
+if session_update:
+    try:
+        session_update['coverage_score'] = float('${coverage_after}')
+    except (ValueError, TypeError):
+        pass
+    merged = merge_state(existing, session_update)
+    save_state(state_path, merged)
+elif '${picked_task}' != '?':
+    update = {'current_task': '${picked_task}'}
+    try:
+        update['coverage_score'] = float('${coverage_after}')
+    except (ValueError, TypeError):
+        pass
+    merged = merge_state(existing, update)
+    save_state(state_path, merged)
+" 2>/dev/null || true
     fi
 
     # Brief cooldown to let usage cache update
@@ -327,7 +445,9 @@ log "Syncing DB to markdown..."
 python3 scripts/research_db.py sync-to-markdown 2>&1 | head -2
 
 final_findings=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo "?")
+final_coverage=$(python3 scripts/research_db.py coverage-score --gedcom private/tree.ged --quiet 2>/dev/null || echo "?")
 log "=== Unattended Research Complete ==="
 log "Sessions run: $session_num"
 log "New findings this run: $total_findings (DB total: $final_findings)"
+log "Coverage: ${run_coverage}% → ${final_coverage}%"
 log "Logs: $LOG_DIR/unattended-*.md"
