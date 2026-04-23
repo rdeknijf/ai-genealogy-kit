@@ -77,6 +77,7 @@ def get_db(db_path: Path = DEFAULT_DB) -> sqlite3.Connection:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
@@ -126,19 +127,29 @@ def cmd_get_tasks(args):
 
 MODEL_RANK = {"haiku": 0, "sonnet": 1, "opus": 2}
 
+WORK_TYPE_MODEL = {
+    "lookup": "sonnet",
+    "synthesis": "opus",
+    "disambiguation": "opus",
+    "verification": "haiku",
+    "tree_edit": "sonnet",
+}
+
 
 def cmd_next_model(args):
     """Return the model to use for the next research session.
 
-    Picks the highest-priority non-terminal task. Uses task.requires_model
-    as the base, then escalates if any linked OPEN finding has a higher
-    model rank (opus > sonnet > haiku). Falls back to --default if
-    nothing is set."""
+    Picks the highest-priority non-terminal task. Model selection:
+    1. task.requires_model (explicit override) wins
+    2. task.work_type → auto-select via WORK_TYPE_MODEL mapping
+    3. Any linked OPEN finding with requires_model can escalate
+    4. Falls back to --default
+    """
     db = get_db(args.db)
     default = args.default
 
     top = db.execute(
-        "SELECT id, requires_model FROM research_tasks "
+        "SELECT id, requires_model, work_type FROM research_tasks "
         "WHERE status NOT IN ('DONE', 'BLOCKED', 'SUPERSEDED') "
         "ORDER BY priority ASC, id ASC LIMIT 1"
     ).fetchone()
@@ -146,12 +157,16 @@ def cmd_next_model(args):
     if not top:
         result = {"model": default, "reason": f"no active tasks, default={default}"}
     else:
-        model = top["requires_model"] or default
-        reason = (
-            f"task {top['id']} requires {model}"
-            if top["requires_model"]
-            else f"task {top['id']} unset, default={default}"
-        )
+        if top["requires_model"]:
+            model = top["requires_model"]
+            reason = f"task {top['id']} requires {model}"
+        elif top["work_type"] and top["work_type"] in WORK_TYPE_MODEL:
+            model = WORK_TYPE_MODEL[top["work_type"]]
+            reason = f"task {top['id']} work_type={top['work_type']} → {model}"
+        else:
+            model = default
+            reason = f"task {top['id']} unset, default={default}"
+
         escalation = db.execute(
             "SELECT id, requires_model FROM findings "
             "WHERE queue_ref = ? AND status = 'OPEN' AND requires_model IS NOT NULL",
@@ -241,6 +256,78 @@ def cmd_add_task(args):
     db.commit()
     db.close()
     print(json.dumps({"id": tid, "requires_model": args.model, "status": "created"}))
+
+
+def cmd_coverage_score(args):
+    """Compute and display the research coverage score."""
+    from ancestry import coverage_score
+
+    result = coverage_score(
+        db_path=str(args.db),
+        gedcom_path=args.gedcom,
+        root_id=args.root,
+        max_gen=args.generations,
+    )
+    if args.quiet:
+        print(f"{result['coverage_pct']:.1f}")
+    else:
+        output(result)
+
+
+def cmd_add_negative(args):
+    """Record a negative (failed) search so future sessions skip it."""
+    db = get_db(args.db)
+    try:
+        db.execute(
+            "INSERT INTO negative_searches "
+            "(person_id, source, query_fingerprint, query_params, result_class, reason, session_id, cooldown_until) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                args.person,
+                args.source,
+                args.fingerprint,
+                args.params,
+                args.result,
+                args.reason,
+                args.session_id,
+                args.cooldown,
+            ),
+        )
+        db.commit()
+        status = "created"
+    except sqlite3.IntegrityError:
+        db.execute(
+            "UPDATE negative_searches SET result_class = ?, reason = ?, session_id = ?, "
+            "cooldown_until = ?, created_at = datetime('now') "
+            "WHERE person_id = ? AND source = ? AND query_fingerprint = ?",
+            (
+                args.result,
+                args.reason,
+                args.session_id,
+                args.cooldown,
+                args.person,
+                args.source,
+                args.fingerprint,
+            ),
+        )
+        db.commit()
+        status = "upserted"
+    db.close()
+    print(json.dumps({"person_id": args.person, "source": args.source, "status": status}))
+
+
+def cmd_check_negatives(args):
+    """Return all negative searches for a person, optionally filtered by source."""
+    db = get_db(args.db)
+    query = "SELECT source, query_fingerprint, result_class, reason, cooldown_until, created_at FROM negative_searches WHERE person_id = ?"
+    params: list = [args.id]
+    if args.source:
+        query += " AND source = ?"
+        params.append(args.source)
+    query += " ORDER BY created_at DESC"
+    rows = db.execute(query, params).fetchall()
+    db.close()
+    output({"person_id": args.id, "negatives": [dict(r) for r in rows]})
 
 
 def cmd_validate(args):
@@ -717,6 +804,29 @@ def main():
     p.add_argument("--goal", help="Goal description", default="")
     p.add_argument("--where-to-look", help="Archive hints", default="")
     p.add_argument("--raw-markdown", help="Full markdown body (optional; auto-built if omitted)")
+
+    # coverage-score — compute research coverage
+    p = subparsers.add_parser("coverage-score", help="Compute research coverage score")
+    p.add_argument("--gedcom", default="private/tree.ged", help="Path to GEDCOM file")
+    p.add_argument("--root", default="I0000", help="Root individual ID")
+    p.add_argument("--generations", type=int, default=7, help="Number of generations")
+    p.add_argument("--quiet", "-q", action="store_true", help="Print only the percentage")
+
+    # add-negative — record a failed search
+    p = subparsers.add_parser("add-negative", help="Record a negative (failed) search")
+    p.add_argument("--person", required=True, help="Person ID (e.g. I0067)")
+    p.add_argument("--source", required=True, help="Archive/source name")
+    p.add_argument("--fingerprint", required=True, help="Normalized query fingerprint")
+    p.add_argument("--result", required=True, choices=["empty", "error", "timeout", "not_indexed"])
+    p.add_argument("--reason", help="Why the search failed")
+    p.add_argument("--params", help="Raw query parameters (for reference)")
+    p.add_argument("--session-id", help="Session that performed the search")
+    p.add_argument("--cooldown", help="Don't retry until this date (ISO format)")
+
+    # check-negatives — list failed searches for a person
+    p = subparsers.add_parser("check-negatives", help="Check negative searches for a person")
+    p.add_argument("id", help="Person ID (e.g. I0067)")
+    p.add_argument("--source", help="Filter by source name")
 
     # validate — flag tasks missing a model hint
     p = subparsers.add_parser(

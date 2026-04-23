@@ -64,10 +64,32 @@ def parse(path: Path) -> dict[str, Any]:
             elif t == "result":
                 result = ev
 
-    # Task id heuristic: first RQ-NNN in tool calls, then final text
-    haystack = json.dumps(tool_calls) + "\n" + "\n".join(assistant_texts)
-    m = RQ_PATTERN.search(haystack)
-    task_id = m.group(0) if m else None
+    # Task id heuristic: prefer RQ-NNN from update-task/add-finding commands
+    # (the actual task worked on), then final assistant text, then frequency.
+    from collections import Counter
+
+    # Tier 1: RQ-NNN in update-task or add-finding commands (most reliable)
+    action_rqs: list[str] = []
+    for tc in tool_calls:
+        inp = json.dumps(tc.get("input", {}))
+        if "update-task" in inp or "add-finding" in inp:
+            action_rqs.extend(RQ_PATTERN.findall(inp))
+
+    if action_rqs:
+        task_id = Counter(action_rqs).most_common(1)[0][0]
+    else:
+        # Tier 2: last assistant text (session summary)
+        final_rqs = RQ_PATTERN.findall(assistant_texts[-1]) if assistant_texts else []
+        if final_rqs:
+            task_id = final_rqs[0]
+        else:
+            # Tier 3: frequency across all tool calls + assistant text
+            rq_counts: Counter[str] = Counter()
+            for tc in tool_calls:
+                rq_counts.update(RQ_PATTERN.findall(json.dumps(tc)))
+            for txt in assistant_texts:
+                rq_counts.update(RQ_PATTERN.findall(txt))
+            task_id = rq_counts.most_common(1)[0][0] if rq_counts else None
 
     final_text = assistant_texts[-1] if assistant_texts else ""
 
@@ -142,14 +164,21 @@ def render_markdown(info: dict[str, Any]) -> str:
     return "\n".join(out) + "\n"
 
 
-def log_run(db_path: Path, info: dict[str, Any], started_at: str | None) -> None:
+def log_run(
+    db_path: Path,
+    info: dict[str, Any],
+    started_at: str | None,
+    coverage_before: float | None = None,
+    coverage_after: float | None = None,
+) -> None:
     db = sqlite3.connect(db_path)
     summary = (info["final_text"] or "").strip()
     if len(summary) > 2000:
         summary = summary[:2000] + "…"
     db.execute(
         "INSERT INTO task_runs (task_id, session_id, started_at, ended_at, "
-        "tokens_used, summary, exit_reason) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "tokens_used, summary, exit_reason, coverage_before, coverage_after) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             info.get("task_id"),
             info.get("session_id"),
@@ -158,6 +187,8 @@ def log_run(db_path: Path, info: dict[str, Any], started_at: str | None) -> None
             info.get("tokens_used"),
             summary,
             info.get("exit_reason"),
+            coverage_before,
+            coverage_after,
         ),
     )
     db.commit()
@@ -178,6 +209,18 @@ def main() -> int:
         help="ISO timestamp when the session started (for --log-run)",
     )
     ap.add_argument("--db", default=str(DEFAULT_DB), help="SQLite DB path")
+    ap.add_argument(
+        "--coverage-before",
+        type=float,
+        default=None,
+        help="Coverage score before the session (for --log-run)",
+    )
+    ap.add_argument(
+        "--coverage-after",
+        type=float,
+        default=None,
+        help="Coverage score after the session (for --log-run)",
+    )
     args = ap.parse_args()
 
     path = Path(args.jsonl)
@@ -190,7 +233,13 @@ def main() -> int:
 
     if args.log_run:
         try:
-            log_run(Path(args.db), info, args.started_at)
+            log_run(
+                Path(args.db),
+                info,
+                args.started_at,
+                coverage_before=args.coverage_before,
+                coverage_after=args.coverage_after,
+            )
         except Exception as e:
             print(f"warning: log-run failed: {e}", file=sys.stderr)
 
