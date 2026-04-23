@@ -164,6 +164,58 @@ Always use `gedcom_query.py` or line-by-line parsing instead.
 
 ### Phase 2: Lookup (8 min)
 
+#### Negative search tracking — MANDATORY
+
+Before any archive lookup, check what's already been tried:
+
+```bash
+python scripts/research_db.py check-negatives <person_id>
+```
+
+If the source+query combination is already marked negative, skip it
+unless you have new evidence that changes the query (different name
+spelling, different date range, different archive collection).
+
+After a search returns no results, record it:
+
+```bash
+python scripts/research_db.py add-negative \
+    --person <ID> --source <source> \
+    --fingerprint "<normalized_query_params>" \
+    --result empty --reason "<why it failed>"
+```
+
+This prevents wasting turns retrying known dead ends.
+
+#### Patronymic disambiguation (pre-1811)
+
+Don't just search for the target person's baptism. Map every baptism
+where the target or spouse appears as witness (getuige). Siblings
+appear as witnesses at each other's children's baptisms, providing a
+unique "family fingerprint."
+
+Use Dutch naming customs (Vernoeming): 1st son = paternal grandfather,
+2nd son = maternal grandfather, 1st daughter = maternal grandmother,
+2nd daughter = paternal grandmother. This is a strong disambiguation
+signal when multiple families share the same patronymic.
+
+#### Old Dutch text — two-pass reading
+
+Use two-pass reading for handwritten records. First pass: diplomatic
+transcription (exactly what the record says, including abbreviations
+and archaic spelling). Second pass: normalized modern Dutch
+interpretation. Never jump straight to extraction — this prevents
+"hallucinating" patronymic endings like -sen vs -sz vs -s.
+
+#### Regional batching
+
+When working on multiple people from the same region, group lookups by
+municipality/archive. A session searching Gelders Archief for one
+person can efficiently check 3-5 people from the same area since the
+archive navigation and DTB register browsing overlap.
+
+#### Lookup execution
+
 Launch a background agent for archive lookups using the appropriate
 data source skill. The agent should do lookups **sequentially** when
 using Playwright-based skills (single browser session constraint).

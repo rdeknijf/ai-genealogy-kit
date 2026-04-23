@@ -49,21 +49,23 @@ Then launch the runner in the background. The `env -u` flags are critical —
 without them, `claude -p` refuses to start because it detects nesting.
 
 ```bash
+: > private/research/logs/runner.log  # truncate in-place (preserves inode for tail -f)
 nohup env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
     ./scripts/research-runner.sh \
     --sessions 20 \
-    > private/research/logs/runner.log 2>&1 &
+    >> private/research/logs/runner.log 2>&1 &
 echo "PID: $!"
 ```
 
 If the user has a usage tracking cache (e.g. ccstatusline), add budget ceilings:
 
 ```bash
+: > private/research/logs/runner.log  # truncate in-place (preserves inode for tail -f)
 nohup env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
     ./scripts/research-runner.sh \
     --usage-cache ~/.cache/ccstatusline/usage.json \
     --session-ceiling 80 --weekly-ceiling 90 \
-    > private/research/logs/runner.log 2>&1 &
+    >> private/research/logs/runner.log 2>&1 &
 echo "PID: $!"
 ```
 
@@ -98,8 +100,12 @@ The cron prompt should run these checks:
 
 1. `ps -p PID` — is it still running?
 2. `tail -8 .../runner.log` — latest status
-3. Usage cache — current session/weekly usage
-4. `git diff --stat` — are files being modified?
+3. `cat private/research/logs/heartbeat.json` — live session state (turn count,
+   cost, stuck detection). If `stuck: true`, the session is retrying the same
+   tool call — consider killing it.
+4. Usage cache — current session/weekly usage
+5. `cat private/research/session_state.json` — structured state from last completed session
+6. `git diff --stat` — are files being modified?
 
 If the process died unexpectedly (no "Budget ceiling reached" message),
 restart it with the same command from Phase 1.
