@@ -2,13 +2,13 @@
 
 import math
 import os
-import re
 import sys
 from pathlib import Path
 
 # Reuse GEDCOM parsing from analyze_gedcom
 sys.path.insert(0, str(Path(__file__).parent))
 from analyze_gedcom import parse_gedcom, get_individuals, get_families
+from ancestry import build_ahnentafel, derive_tiers_from_gedcom, tiers_from_db
 
 
 # --- Tier colors ---
@@ -30,55 +30,10 @@ TIER_LABELS = {
 }
 
 
-def derive_tiers_from_gedcom(records: dict, individuals: dict) -> dict[str, str]:
-    """Derive verification tiers from GEDCOM source citations.
-
-    Source ID conventions in this project:
-    - S600xxx = archive research (civil records with akte numbers) → Tier B
-    - S_PLxxx = Playwright/web verified sources → Tier B
-    - S00xx   = manual/original sources → Tier B
-    - S500xxx = MyHeritage import (other users' trees) → Tier D
-
-    Returns {person_id: tier} based on best source quality found.
-    """
-    tier_rank = {"A": 0, "B": 1, "C": 2, "D": 3}
-    person_tiers: dict[str, str] = {}
-
-    for pid, person_lines in records.items():
-        if pid not in individuals:
-            continue
-
-        # Collect all source references from this person's record
-        source_ids = set()
-        for line in person_lines:
-            m = re.search(r'SOUR @([^@]+)@', line)
-            if m:
-                source_ids.add(m.group(1))
-
-        if not source_ids:
-            continue
-
-        # Classify sources and pick the best tier
-        best_tier = None
-        for sid in source_ids:
-            if sid.startswith("S600") or sid.startswith("S_PL") or re.match(r"S\d{4}$", sid):
-                tier = "B"  # archive/verified sources
-            elif sid.startswith("S500"):
-                tier = "D"  # MyHeritage user trees
-            else:
-                tier = "D"  # unknown source type, be conservative
-
-            if best_tier is None or tier_rank.get(tier, 99) < tier_rank.get(best_tier, 99):
-                best_tier = tier
-
-        if best_tier:
-            person_tiers[pid] = best_tier
-
-    return person_tiers
-
-
 def parse_findings(findings_path: str) -> dict[str, str]:
     """Parse FINDINGS.md and return {person_id: best_tier}."""
+    import re
+
     person_tiers: dict[str, list[str]] = {}
     tier_rank = {"A": 0, "B": 1, "C": 2, "D": 3}
 
@@ -88,25 +43,20 @@ def parse_findings(findings_path: str) -> dict[str, str]:
     blocks = re.split(r"(?=^## F-\d+)", text, flags=re.MULTILINE)
 
     for block in blocks:
-        # Extract person ID(s) — may have multiple (I####) references
         person_match = re.search(r"\*\*Person:\*\*.*?\(I(\d+)\)", block)
         if not person_match:
             continue
-        # Normalize to match GEDCOM IDs: short IDs (1-3 digits) get zero-padded to 4,
-        # longer IDs (like I500050) stay as-is
         raw_num = person_match.group(1)
         if len(raw_num) <= 3:
             pid = f"I{int(raw_num):04d}"
         else:
             pid = f"I{raw_num}"
 
-        # Extract tier
         tier_match = re.search(r"\*\*Tier:\*\*\s*([ABCD])\b", block)
         if not tier_match:
             continue
         tier = tier_match.group(1)
 
-        # Extract status — skip REJECTED findings
         status_match = re.search(r"\*\*Status:\*\*\s*(\w+)", block)
         if status_match and status_match.group(1) == "REJECTED":
             continue
@@ -115,46 +65,11 @@ def parse_findings(findings_path: str) -> dict[str, str]:
             person_tiers[pid] = []
         person_tiers[pid].append(tier)
 
-    # Take best (lowest rank) tier per person
     best = {}
     for pid, tiers in person_tiers.items():
         best[pid] = min(tiers, key=lambda t: tier_rank.get(t, 99))
 
     return best
-
-
-def build_ahnentafel(root_id: str, individuals: dict, families: dict, max_gen: int) -> dict[int, str]:
-    """Build Ahnentafel numbering: 1=root, 2=father, 3=mother, 4=pat.grandfather, etc.
-    Returns {ahnentafel_number: person_id}."""
-    ahnen = {1: root_id}
-    for n in sorted(ahnen.copy().keys()):
-        _fill_ahnen(ahnen, n, individuals, families, max_gen)
-    return ahnen
-
-
-def _fill_ahnen(ahnen: dict, n: int, individuals: dict, families: dict, max_gen: int):
-    """Recursively fill Ahnentafel positions."""
-    gen = int(math.log2(n)) if n > 0 else 0
-    if gen >= max_gen:
-        return
-
-    pid = ahnen.get(n)
-    if not pid:
-        return
-    person = individuals.get(pid)
-    if not person:
-        return
-
-    for fam_id in person.get("famc", []):
-        fam = families.get(fam_id)
-        if not fam:
-            continue
-        if fam["husb"] and 2 * n not in ahnen:
-            ahnen[2 * n] = fam["husb"]
-            _fill_ahnen(ahnen, 2 * n, individuals, families, max_gen)
-        if fam["wife"] and 2 * n + 1 not in ahnen:
-            ahnen[2 * n + 1] = fam["wife"]
-            _fill_ahnen(ahnen, 2 * n + 1, individuals, families, max_gen)
 
 
 def make_fan_chart_svg(
@@ -415,32 +330,6 @@ def _darken(hex_color: str) -> str:
 def _escape(text: str) -> str:
     """Escape text for SVG XML."""
     return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-
-
-def tiers_from_db(db_path: str) -> dict[str, str]:
-    """Query best tier per person from the research database."""
-    import sqlite3
-    tier_rank = {"A": 0, "B": 1, "C": 2, "D": 3}
-    conn = sqlite3.connect(db_path)
-    conn.row_factory = sqlite3.Row
-    rows = conn.execute(
-        "SELECT fp.person_id, f.tier FROM findings f "
-        "JOIN finding_persons fp ON f.id = fp.finding_id "
-        "WHERE f.tier IS NOT NULL AND (f.status IS NULL OR f.status != 'REJECTED')"
-    ).fetchall()
-    conn.close()
-
-    person_tiers: dict[str, list[str]] = {}
-    for r in rows:
-        pid = r["person_id"]
-        if pid not in person_tiers:
-            person_tiers[pid] = []
-        person_tiers[pid].append(r["tier"])
-
-    return {
-        pid: min(tiers, key=lambda t: tier_rank.get(t, 99))
-        for pid, tiers in person_tiers.items()
-    }
 
 
 def main():
