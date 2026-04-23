@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS findings (
     queue_ref TEXT,                -- e.g. RQ-001
     raw_markdown TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    requires_model TEXT
 );
 
 CREATE TABLE IF NOT EXISTS finding_persons (
@@ -80,7 +81,9 @@ CREATE TABLE IF NOT EXISTS research_tasks (
     where_to_look TEXT,
     raw_markdown TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    requires_model TEXT,
+    work_type TEXT                  -- lookup, synthesis, disambiguation, verification, tree_edit
 );
 
 CREATE TABLE IF NOT EXISTS task_runs (
@@ -91,7 +94,23 @@ CREATE TABLE IF NOT EXISTS task_runs (
     ended_at TEXT,
     tokens_used INTEGER,
     summary TEXT,
-    exit_reason TEXT
+    exit_reason TEXT,
+    coverage_before REAL,
+    coverage_after REAL
+);
+
+CREATE TABLE IF NOT EXISTS negative_searches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    person_id TEXT NOT NULL,
+    source TEXT NOT NULL,
+    query_fingerprint TEXT NOT NULL,
+    query_params TEXT,
+    result_class TEXT NOT NULL,     -- 'empty', 'error', 'timeout', 'not_indexed'
+    reason TEXT,
+    session_id TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    cooldown_until TEXT,
+    UNIQUE(person_id, source, query_fingerprint)
 );
 
 CREATE TABLE IF NOT EXISTS person_research_state (
@@ -143,3 +162,5 @@ CREATE INDEX IF NOT EXISTS idx_research_tasks_status ON research_tasks(status);
 CREATE INDEX IF NOT EXISTS idx_persons_surname ON persons(surname);
 CREATE INDEX IF NOT EXISTS idx_persons_birth_year ON persons(birth_year);
 CREATE INDEX IF NOT EXISTS idx_family_children_child ON family_children(child_id);
+CREATE INDEX IF NOT EXISTS idx_neg_person ON negative_searches(person_id);
+CREATE INDEX IF NOT EXISTS idx_neg_source ON negative_searches(source);
