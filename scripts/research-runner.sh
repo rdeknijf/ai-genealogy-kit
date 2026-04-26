@@ -24,8 +24,8 @@ LOG_DIR="private/research/logs"
 SESSION_CEILING=80    # stop if 5h session usage exceeds this % (requires --usage-cache)
 WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this % (requires --usage-cache)
 MAX_SESSIONS=5        # default conservative; override with --sessions N
-MAX_TURNS=50          # turns per claude session (~1 research cycle + summary)
-SESSION_TIMEOUT=90m   # wallclock timeout per session (kill if hung)
+MAX_TURNS=75          # turns per claude session (full research cycle + documentation)
+SESSION_TIMEOUT=120m  # wallclock timeout per session (kill if hung)
 DRY_RUN=false
 INHIBIT_PID=""
 
@@ -127,13 +127,24 @@ You have a HARD LIMIT of MAX_TURNS_VALUE tool-call turns. You CANNOT see
 the counter, so you must manage your own budget:
 
 - **Turns 1-8:** Assess (read queue, check recent findings, understand the task)
-- **Turns 9-35:** Lookup + Apply (archive searches, sub-agents, GEDCOM edits)
-- **Turns 36-42:** Document (write findings to DB via research_db.py, update queue status)
-- **Turns 43-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
+- **Turns 9-55:** Lookup + Document INLINE (archive searches, sub-agents —
+  write each finding to DB IMMEDIATELY after discovery, not later)
+- **Turns 56-68:** Apply GEDCOM (optional — only if you have documented findings
+  that need GEDCOM edits. Skip entirely if running low on turns)
+- **Turns 69-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
 
-If you are deep in research at turn ~35, STOP looking up new things and
-start documenting + summarizing. An incomplete summary is far better than
-no summary at all. The next session will continue where you left off.
+### DOCUMENT INLINE — MOST IMPORTANT RULE
+
+After EACH successful archive lookup, IMMEDIATELY call:
+  `python scripts/research_db.py add-finding '<json>'`
+
+Do NOT batch findings for a "Document phase" — that phase no longer exists.
+If you get killed at any turn, all findings written so far are safe in the DB.
+Findings are the precious output. GEDCOM edits are reproducible from findings.
+
+If you are deep in research at turn ~55, STOP looking up new things and
+start your summary. An incomplete summary is far better than no summary at
+all. The next session will continue where you left off.
 
 ## Previous session context
 
@@ -154,18 +165,22 @@ PREV_SESSION_SUMMARY
 4. Run `python scripts/research_db.py get-person <ID>` for each person in the task.
 
 Read and follow the research skill at `.claude/skills/research/SKILL.md`.
-Run 1 full research cycle with 4 phases:
+Run 1 full research cycle with 3 phases:
 
 1. **Assess** — use `research_db.py get-tasks` and `get-person` to understand the
    task context: people IDs, current data tier, research goals, and where to look.
    Understand what's known vs unknown.
 
-2. **Lookup** — search archives using the skills in `.claude/skills/`
+2. **Lookup + Document** — search archives using the skills in `.claude/skills/`
    (wiewaswie.md, openarchieven.md, gelders-archief.md, etc.). Use sub-agents
    for parallel lookups. Follow the "Where to look" guidance in the queue item.
    Also use web search for specialized sources.
+   **CRITICAL**: after each successful lookup, IMMEDIATELY write the finding to DB:
+   `python scripts/research_db.py add-finding '<json>'`
+   Do not accumulate findings — persist each one the moment you have it.
+   Update the task status as you go.
 
-3. **Apply** — edit `private/tree.ged` directly:
+3. **Apply** (optional, skip if low on turns) — edit `private/tree.ged` directly:
    - Add/correct dates and places from official records
    - Add source citations (SOUR records) with archive references
    - Add newly discovered parents as INDI+FAM records
@@ -173,10 +188,8 @@ Run 1 full research cycle with 4 phases:
      ID collisions (see research skill for the exact commands)
    - Only apply Tier A/B evidence (official archive records)
    - For Tier C/D findings, document but do NOT edit the GEDCOM
-
-4. **Document** — use `python scripts/research_db.py add-finding '<json>'` with
-   finding ID, person IDs, tier, status, evidence, and archive refs.
-   Update the task status to reflect progress.
+   - If you run out of turns before Apply, that's fine — the next session
+     will pick up documented findings and apply them
 
 ## Rules
 
