@@ -254,6 +254,26 @@ session_num=0
 total_findings=0
 STATE_FILE="private/research/session_state.json"
 HEARTBEAT_FILE="$LOG_DIR/heartbeat.json"
+
+# Validate state file: clear current_task if it points to a BLOCKED/DONE task
+if [[ -f "$STATE_FILE" ]]; then
+    PYTHONPATH=scripts python3 -c "
+import sqlite3
+from pathlib import Path
+from session_state import load_state, save_state
+state = load_state(Path('$STATE_FILE'))
+task_id = state.get('current_task')
+if task_id:
+    db = sqlite3.connect('private/genealogy.db')
+    row = db.execute('SELECT status FROM research_tasks WHERE id = ?', (task_id,)).fetchone()
+    if not row or row[0] in ('BLOCKED', 'DONE', 'SUPERSEDED'):
+        state.pop('current_task', None)
+        state['session_count_on_task'] = 0
+        save_state(Path('$STATE_FILE'), state)
+        print(f'Cleared stale current_task {task_id} (status: {row[0] if row else \"not found\"})')
+    db.close()
+" 2>/dev/null || true
+fi
 prev_findings_count=$(python3 scripts/research_db.py stats 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin)['tables']['findings'])" 2>/dev/null || echo 0)
 log "Starting findings count: $prev_findings_count"
 run_coverage=$(python3 scripts/research_db.py coverage-score --gedcom private/tree.ged --quiet 2>/dev/null || echo "?")
@@ -361,20 +381,33 @@ print(format_for_prompt(state))
     log "New findings this session: $new_findings (DB total: $current_findings)"
 
     # Auto-block stalled tasks: if the last 2 runs on the same task each produced ≤1 finding,
-    # mark the task BLOCKED. Uses task_runs table instead of bash variables for robustness.
+    # mark the task BLOCKED. Counts actual DB findings created during each run's time window
+    # (not F-NNN regex on summary text, which misses findings from timed-out sessions).
     if [[ "$picked_task" != "?" ]]; then
         stall_count=$(python3 -c "
-import sqlite3, json
+import sqlite3
 db = sqlite3.connect('private/genealogy.db')
 db.execute('PRAGMA busy_timeout = 5000')
 runs = db.execute(
-    'SELECT task_id, summary FROM task_runs WHERE task_id = ? ORDER BY id DESC LIMIT 2',
+    'SELECT id, started_at, ended_at FROM task_runs WHERE task_id = ? ORDER BY id DESC LIMIT 2',
     ('$picked_task',)
 ).fetchall()
 if len(runs) >= 2:
-    # Count findings mentioned in each run's summary (F-NNN pattern)
-    import re
-    low = sum(1 for _, s in runs if len(re.findall(r'F-\d{3,4}', s or '')) <= 1)
+    low = 0
+    for run_id, started, ended in runs:
+        if started:
+            end = ended or '9999-12-31'
+            # Normalize ISO 'T' separator to space for consistent comparison with findings.created_at
+            s_norm = started.replace('T', ' ').rstrip('Z')
+            e_norm = end.replace('T', ' ').rstrip('Z')
+            count = db.execute(
+                'SELECT COUNT(*) FROM findings WHERE created_at >= ? AND created_at <= ?',
+                (s_norm, e_norm)
+            ).fetchone()[0]
+        else:
+            count = 0
+        if count <= 1:
+            low += 1
     print(low)
 else:
     print(0)
