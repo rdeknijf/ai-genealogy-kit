@@ -1,0 +1,18 @@
+services:
+  genealogy-runner:
+    build: .
+    container_name: genealogy-runner
+    user: "1000:1000"
+    working_dir: /workspace
+    volumes:
+      - ~/projects/genealogy:/workspace
+      # .claude mount — must be writable for OAuth token refresh
+      - ~/.claude:/home/ubuntu/.claude
+    env_file:
+      - ~/projects/genealogy/.env
+    environment:
+      - HOME=/home/ubuntu
+    stdin_open: true
+    tty: true
+    # Memory limit: Claude Code + Chromium + Python on shared 32GB host
+    mem_limit: 12g
