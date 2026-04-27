@@ -133,6 +133,8 @@ def format_detail(data: dict) -> str:
     role_map = {r["PersonKeyRef"]: r.get("RelationType", "?") for r in relations}
 
     event = data.get("Event", {})
+    if isinstance(event, list):
+        event = event[0] if event else {}
     lines.append(f"Event: {event.get('EventType', '?')}")
     lines.append(f"Date: {format_date(event.get('EventDate'))}")
     ep = event.get("EventPlace", {})

@@ -11,28 +11,30 @@
 # Usage:
 #   ./scripts/research-runner.sh                     # run 5 sessions (default)
 #   ./scripts/research-runner.sh --sessions 20       # run exactly 20 sessions
-#   ./scripts/research-runner.sh --usage-cache ~/.cache/ccstatusline/usage.json \
-#       --session-ceiling 80 --weekly-ceiling 90     # stop on usage ceilings
+#   ./scripts/research-runner.sh --usage-tracking     # stop on usage ceilings (queries API directly)
 #   ./scripts/research-runner.sh --dry-run           # show plan, don't execute
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # --- Configuration ---
-USAGE_CACHE=""        # path to usage JSON (optional, e.g. ccstatusline)
+USAGE_TRACKING=false  # query Claude OAuth API for usage (no external deps)
+USAGE_CACHE=""        # path to external usage JSON (legacy, e.g. ccstatusline)
 LOG_DIR="private/research/logs"
-SESSION_CEILING=80    # stop if 5h session usage exceeds this % (requires --usage-cache)
-WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this % (requires --usage-cache)
+SESSION_CEILING=80    # stop if 5h session usage exceeds this %
+WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this %
 MAX_SESSIONS=5        # default conservative; override with --sessions N
 MAX_TURNS=75          # turns per claude session (full research cycle + documentation)
 SESSION_TIMEOUT=120m  # wallclock timeout per session (kill if hung)
 DRY_RUN=false
 INHIBIT_PID=""
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # --- Parse arguments ---
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --sessions)   MAX_SESSIONS="$2"; shift 2 ;;
+        --usage-tracking) USAGE_TRACKING=true; shift ;;
         --usage-cache) USAGE_CACHE="$2"; shift 2 ;;
         --session-ceiling) SESSION_CEILING="$2"; shift 2 ;;
         --weekly-ceiling)  WEEKLY_CEILING="$2"; shift 2 ;;
@@ -49,11 +51,19 @@ mkdir -p "$LOG_DIR"
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 
 has_usage_tracking() {
-    [[ -n "$USAGE_CACHE" && -f "$USAGE_CACHE" ]]
+    $USAGE_TRACKING || [[ -n "$USAGE_CACHE" && -f "$USAGE_CACHE" ]]
+}
+
+refresh_usage() {
+    if $USAGE_TRACKING; then
+        "$SCRIPT_DIR/check_usage.sh" --cache-file "$LOG_DIR/.usage-cache.json" --quiet 2>/dev/null || true
+        USAGE_CACHE="$LOG_DIR/.usage-cache.json"
+    fi
 }
 
 check_usage() {
-    if ! has_usage_tracking; then
+    refresh_usage
+    if [[ -z "$USAGE_CACHE" || ! -f "$USAGE_CACHE" ]]; then
         echo "- -"
         return
     fi
@@ -90,7 +100,11 @@ trap cleanup EXIT
 log "=== Unattended Research ==="
 log "Max sessions: $MAX_SESSIONS, Max turns: $MAX_TURNS, Timeout: $SESSION_TIMEOUT"
 if has_usage_tracking; then
-    log "Usage tracking: $USAGE_CACHE"
+    if $USAGE_TRACKING; then
+        log "Usage tracking: direct API query"
+    else
+        log "Usage tracking: $USAGE_CACHE (legacy)"
+    fi
     log "Ceilings: session=${SESSION_CEILING}%, weekly=${WEEKLY_CEILING}%"
     read -r cur_session cur_weekly <<< "$(check_usage)"
     log "Current usage — session: ${cur_session}%, weekly: ${cur_weekly}%"

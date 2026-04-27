@@ -18,7 +18,10 @@ case "$FILE_PATH" in
   *) exit 0 ;;
 esac
 
-LOCK_DIR="/tmp/${LOCK_NAME}.lock"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LOCK_BASE="${SCRIPT_DIR}/private/locks"
+mkdir -p "$LOCK_BASE"
+LOCK_DIR="${LOCK_BASE}/${LOCK_NAME}.lock"
 
 allow() {
   echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}'

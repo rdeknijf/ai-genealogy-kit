@@ -164,11 +164,16 @@ Key `playwright-cli` features for research:
 - `screenshot` — capture document scans
 - Snapshots save to `.playwright-cli/*.yml` files (token-efficient)
 
+**Screenshot file paths**: Always save screenshots to `private/scans/`
+with a descriptive filename. When using `browser_take_screenshot`, set
+`filename` to `private/scans/<descriptive-name>.png`. Never save
+screenshots to the repo root.
+
 ### Locking and concurrency
 
 | Resource | Mechanism |
 |----------|-----------|
-| `private/tree.ged` | File lock via `.claude/hooks/file-lock.sh` (atomic mkdir, 5s wait) |
+| `private/tree.ged` | File lock via `.claude/hooks/file-lock.sh` (atomic mkdir in `private/locks/`, 5s wait) |
 | `private/genealogy.db` | SQLite WAL mode (concurrent reads, sequential writes) |
 
 FINDINGS.md is now a derived artifact regenerated via `research_db.py sync-to-markdown`.
@@ -241,6 +246,7 @@ must go through Git LFS in the private repo — never commit binaries directly.
   - `*.ged` — GEDCOM files
   - `research/FINDINGS.md` — research findings
   - `sources/` — scanned documents, certificates, evidence
+  - `scans/` — Playwright screenshots and downloaded archive scans
   - `media/` — photos and scans
 - `research/DATA_SOURCES.md` — catalog of Dutch genealogy archives
 - `scripts/` — Python tools for GEDCOM analysis (`analyze_gedcom.py`) and visualization (`fan_chart.py`)
