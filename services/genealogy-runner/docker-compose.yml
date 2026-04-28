@@ -8,6 +8,7 @@ services:
       - ~/projects/genealogy:/workspace
       # .claude mount — must be writable for OAuth token refresh
       - ~/.claude:/home/ubuntu/.claude
+      - ~/.claude.json:/home/ubuntu/.claude.json
     env_file:
       - ~/projects/genealogy/.env
     environment:
