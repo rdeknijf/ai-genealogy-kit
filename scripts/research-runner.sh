@@ -22,7 +22,7 @@ USAGE_TRACKING=false  # query Claude OAuth API for usage (no external deps)
 USAGE_CACHE=""        # path to external usage JSON (legacy, e.g. ccstatusline)
 LOG_DIR="private/research/logs"
 SESSION_CEILING=80    # stop if 5h session usage exceeds this %
-WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this %
+WEEKLY_CEILING=95     # stop if 7d weekly usage exceeds this %; "proportional" = auto-scale to elapsed fraction
 MAX_SESSIONS=5        # default conservative; override with --sessions N
 MAX_TURNS=75          # turns per claude session (full research cycle + documentation)
 SESSION_TIMEOUT=120m  # wallclock timeout per session (kill if hung)
@@ -44,6 +44,12 @@ while [[ $# -gt 0 ]]; do
         *) echo "Unknown option: $1"; exit 1 ;;
     esac
 done
+
+# Pre-set cache path for direct API tracking (refresh_usage writes here,
+# but runs in a subshell so the variable doesn't propagate back)
+if $USAGE_TRACKING; then
+    USAGE_CACHE="$LOG_DIR/.usage-cache.json"
+fi
 
 # --- Helpers ---
 mkdir -p "$LOG_DIR"
@@ -73,6 +79,24 @@ check_usage() {
     echo "$session $weekly"
 }
 
+effective_weekly_ceiling() {
+    if [[ "$WEEKLY_CEILING" != "proportional" ]]; then
+        echo "$WEEKLY_CEILING"
+        return
+    fi
+    local reset_at
+    reset_at=$(jq -r '.weeklyResetAt // empty' "$USAGE_CACHE" 2>/dev/null) || true
+    if [[ -z "$reset_at" ]]; then
+        echo "95"  # fallback when reset time unknown
+        return
+    fi
+    local now reset_epoch elapsed_pct
+    now=$(date +%s)
+    reset_epoch=$(date -d "$reset_at" +%s 2>/dev/null) || { echo "95"; return; }
+    elapsed_pct=$(echo "scale=1; e = (1 - ($reset_epoch - $now) / 604800) * 100; if (e < 0) 0 else if (e > 100) 100 else e" | bc -l)
+    echo "$elapsed_pct"
+}
+
 over_budget() {
     if ! has_usage_tracking; then
         return 1  # no tracking = rely on --sessions limit
@@ -82,8 +106,10 @@ over_budget() {
         log "Session usage ${session}% >= ceiling ${SESSION_CEILING}%"
         return 0
     fi
-    if (( $(echo "$weekly >= $WEEKLY_CEILING" | bc -l) )); then
-        log "Weekly usage ${weekly}% >= ceiling ${WEEKLY_CEILING}%"
+    local ceiling
+    ceiling=$(effective_weekly_ceiling)
+    if (( $(echo "$weekly >= $ceiling" | bc -l) )); then
+        log "Weekly usage ${weekly}% >= ceiling ${ceiling}% (proportional)"
         return 0
     fi
     return 1
@@ -105,8 +131,9 @@ if has_usage_tracking; then
     else
         log "Usage tracking: $USAGE_CACHE (legacy)"
     fi
-    log "Ceilings: session=${SESSION_CEILING}%, weekly=${WEEKLY_CEILING}%"
     read -r cur_session cur_weekly <<< "$(check_usage)"
+    eff_ceil=$(effective_weekly_ceiling)
+    log "Ceilings: session=${SESSION_CEILING}%, weekly=${WEEKLY_CEILING}% (effective: ${eff_ceil}%)"
     log "Current usage — session: ${cur_session}%, weekly: ${cur_weekly}%"
     if over_budget; then
         log "Already over budget. Exiting."
@@ -317,7 +344,8 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
 
     read -r cur_session cur_weekly <<< "$(check_usage)"
     if has_usage_tracking; then
-        log "--- Session $session_num/$MAX_SESSIONS (usage: session=${cur_session}%, weekly=${cur_weekly}%) ---"
+        eff_ceil=$(effective_weekly_ceiling)
+        log "--- Session $session_num/$MAX_SESSIONS (usage: session=${cur_session}%, weekly=${cur_weekly}%, ceiling=${eff_ceil}%) ---"
     else
         log "--- Session $session_num/$MAX_SESSIONS ---"
     fi
