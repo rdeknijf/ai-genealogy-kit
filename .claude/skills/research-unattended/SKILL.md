@@ -26,89 +26,75 @@ and can run for hours unattended.
 ## Architecture
 
 ```
-[You: babysitter session] ---monitors---> [research-runner.sh] ---spawns---> [claude -p sessions]
-                                               |                                    |
-                                               |                                    v
-                                               |                              GEDCOM + genealogy.db
-                                               v
-                                          runner.log
+[You: babysitter session] ---monitors---> [docker compose: genealogy-runner] ---runs---> [research-runner.sh] ---spawns---> [claude -p sessions]
+                                                      |                                         |
+                                                      |                                         v
+                                                      |                                   GEDCOM + genealogy.db
+                                                      v
+                                                 runner.log
 ```
 
-- `scripts/research-runner.sh` loops, launching fresh `claude -p` sessions
+- The Docker container (`services/genealogy-runner/`) provides a consistent
+  environment with `bc`, `jq`, `sqlite3`, `claude`, and Playwright pre-installed
+- `scripts/research-runner.sh` loops inside the container, launching fresh
+  `claude -p` sessions
 - Each session gets fresh context (~3-5K tokens per person via DB queries)
-- State persists in `private/tree.ged` and `private/genealogy.db`
+- State persists in `private/tree.ged` and `private/genealogy.db` (bind-mounted)
 - The runner checks API usage between sessions and stops at the ceiling
 - You monitor via a 15-minute cron, restarting if it crashes
+
+**IMPORTANT:** Always run via Docker compose. Never run `research-runner.sh`
+directly on the host — it lacks `bc`, `jq`, and other dependencies.
 
 ## Phase 1: Start the runner
 
 Before starting, commit the current state of the private repo as a safety
 snapshot so the user can roll back if needed.
 
-Then launch the runner in the background. The `env -u` flags are critical —
-without them, `claude -p` refuses to start because it detects nesting.
+Then launch the runner via Docker compose:
 
 ```bash
 : > private/research/logs/runner.log  # truncate in-place (preserves inode for tail -f)
-nohup env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
-    ./scripts/research-runner.sh \
-    --sessions 20 \
-    >> private/research/logs/runner.log 2>&1 &
+cd services/genealogy-runner
+nohup docker compose run --rm genealogy-runner -c \
+    "./scripts/research-runner.sh --sessions 20 --usage-tracking --weekly-ceiling proportional" \
+    >> ../../private/research/logs/runner.log 2>&1 &
 echo "PID: $!"
-```
-
-If the user has a usage tracking cache (e.g. ccstatusline), add budget ceilings:
-
-```bash
-: > private/research/logs/runner.log  # truncate in-place (preserves inode for tail -f)
-nohup env -u CLAUDE_CODE_SESSION -u CLAUDE_CODE_CONVERSATION_ID \
-    ./scripts/research-runner.sh \
-    --usage-cache ~/.cache/ccstatusline/usage.json \
-    --session-ceiling 80 --weekly-ceiling 90 \
-    >> private/research/logs/runner.log 2>&1 &
-echo "PID: $!"
-```
-
-Also inhibit system sleep if not handled by the script:
-
-```bash
-systemd-inhibit --what=sleep:idle --who="research-runner" \
-    --why="genealogy research" --mode=block sleep infinity &
+cd ../..
 ```
 
 Verify it started after a few seconds:
 
 ```bash
-sleep 3 && tail -5 private/research/logs/runner.log
+sleep 8 && tail -10 private/research/logs/runner.log
 ```
 
 **Arguments the user might specify:**
 
 - Number of sessions: `--sessions 5` (default, the primary safety limit)
-- Session timeout: `--session-timeout 90m` (default, kills hung sessions)
-- Max turns per session: `--max-turns 50` (default)
-- Usage cache: `--usage-cache <path>` (optional, enables budget ceilings)
-- Session ceiling: `--session-ceiling 80` (requires --usage-cache)
-- Weekly ceiling: `--weekly-ceiling 90` (requires --usage-cache)
+- Session timeout: `--session-timeout 120m` (default, kills hung sessions)
+- Max turns per session: `--max-turns 75` (default)
+- Usage tracking: `--usage-tracking` (queries Claude OAuth API directly)
+- Session ceiling: `--session-ceiling 80` (requires --usage-tracking)
+- Weekly ceiling: `--weekly-ceiling proportional` (auto-scales to elapsed
+  fraction of billing week) or a fixed percentage like `90`
 
 ## Phase 2: Set up monitoring
 
 Create a recurring cron (every 15 minutes) that checks on the runner.
-Replace `PID` with the actual PID from Phase 1.
 
 The cron prompt should run these checks:
 
-1. `ps -p PID` — is it still running?
-2. `tail -8 .../runner.log` — latest status
+1. `docker ps --filter name=genealogy-runner --format '{{.Status}}'` — container running?
+2. `tail -8 private/research/logs/runner.log` — latest status
 3. `cat private/research/logs/heartbeat.json` — live session state (turn count,
    cost, stuck detection). If `stuck: true`, the session is retrying the same
    tool call — consider killing it.
-4. Usage cache — current session/weekly usage
-5. `cat private/research/session_state.json` — structured state from last completed session
-6. `git diff --stat` — are files being modified?
+4. `scripts/check_usage.sh` or equivalent — current session/weekly usage
+5. `cd private && git diff --stat` — are files being modified?
 
-If the process died unexpectedly (no "Budget ceiling reached" message),
-restart it with the same command from Phase 1.
+If the container died unexpectedly (no "Budget ceiling reached" message),
+restart it with the docker compose command from Phase 1.
 
 If it finished normally (budget ceiling or all sessions done), proceed to
 Phase 4 (consolidation).
@@ -116,12 +102,12 @@ Phase 4 (consolidation).
 **Example cron prompt:**
 
 ```
-Check on the research runner (PID XXXX).
-1. ps -p XXXX — still running?
+Check on the Docker research runner.
+1. docker ps --filter name=genealogy-runner --format '{{.Status}}'
 2. tail -8 private/research/logs/runner.log
-3. cat ~/.cache/ccstatusline/usage.json | jq '{sessionUsage, weeklyUsage}'
-4. git diff --stat (in private repo)
-If crashed, restart. If finished normally, consolidate and /ping.
+3. cat private/research/logs/heartbeat.json
+4. cd private && git diff --stat
+If container died, restart via docker compose. If finished normally, consolidate and /ping.
 ```
 
 ## Phase 3: Graceful stop
@@ -129,23 +115,14 @@ If crashed, restart. If finished normally, consolidate and /ping.
 When the user wants to stop after the current session finishes:
 
 ```bash
-# Find the child claude -p process
-CLAUDE_PID=$(pgrep -P RUNNER_PID -f claude | head -1)
-
-# Background watcher: wait for session to finish, then kill runner
-( while kill -0 $CLAUDE_PID 2>/dev/null; do sleep 5; done
-  sleep 2
-  kill RUNNER_PID 2>/dev/null
-) &
+# Stop the container gracefully (sends SIGTERM, waits for current session)
+docker stop genealogy-runner
 ```
-
-This lets the current research session complete its work (including writing
-to GEDCOM and database) before stopping the loop.
 
 To stop immediately (not recommended — may leave partial edits):
 
 ```bash
-kill RUNNER_PID
+docker kill genealogy-runner
 ```
 
 ## Phase 4: Consolidation
@@ -171,35 +148,28 @@ After the runner stops:
 
 ## Known issues and gotchas
 
+### Always use Docker compose
+
+The host machine lacks `bc`, `jq`, and other tools the runner needs. The
+Docker image (`services/genealogy-runner/`) has everything pre-installed.
+**Never run `research-runner.sh` directly on the host.**
+
+The `docker compose run` command is run from `services/genealogy-runner/`.
+The compose file bind-mounts `~/projects/genealogy` as `/workspace` and
+`~/.claude` for OAuth tokens.
+
 ### CLAUDE_CODE_SESSION env var
 
-`claude -p` detects it's inside another Claude session via environment
-variables and refuses to run. The `env -u CLAUDE_CODE_SESSION -u
-CLAUDE_CODE_CONVERSATION_ID` wrapper is mandatory.
+Inside the Docker container, `claude -p` doesn't inherit the babysitter's
+session env vars (the container has a clean environment), so the `env -u`
+wrapper in the script handles this transparently.
 
-### Usage cache staleness — CRITICAL
+### Usage tracking
 
-The `~/.cache/ccstatusline/usage.json` file is updated by the main Claude
-Code session's statusline hook. `claude -p` subprocesses do **NOT** trigger
-cache updates. During unattended research, the cache freezes when the
-babysitter session is sleeping (between ScheduleWakeup intervals).
-
-**Consequences if not addressed:**
-- Runner reads stale session=100% after a 5h reset → bails immediately in
-  an infinite loop ("Already over budget. Exiting.")
-- Runner reads stale session=3% for hours → never hits session-ceiling
-
-**Workaround:** Force-refresh the cache at the start of each babysitter
-wake-up by piping minimal JSON to ccstatusline:
-
-```bash
-echo '{"workspace":{"current_dir":"/home/rdeknijf/projects/genealogy"},"model":{"id":"claude-opus-4-6","display_name":"Opus 4.6"}}' \
-  | /home/rdeknijf/.npm-global/bin/ccstatusline > /dev/null
-```
-
-This makes the babysitter's ScheduleWakeup cadence (~50 min) the effective
-cache-refresh cadence. The runner's `over_budget` check then reads
-reasonably fresh data on its next between-session check.
+Use `--usage-tracking` (not `--usage-cache`). This queries the Claude OAuth
+API directly via `scripts/check_usage.sh` — no external cache needed, no
+staleness issues. Combine with `--weekly-ceiling proportional` to auto-scale
+the ceiling to the elapsed fraction of the billing week.
 
 ### pipefail + grep
 
