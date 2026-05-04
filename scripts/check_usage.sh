@@ -51,6 +51,10 @@ CACHE_JSON=$(echo "$RESPONSE" | jq -c '{
     sessionResetAt: (.five_hour.resets_at // null),
     weeklyUsage: (.seven_day.utilization // null),
     weeklyResetAt: (.seven_day.resets_at // null),
+    weeklySonnetUsage: (.seven_day_sonnet.utilization // null),
+    weeklySonnetResetAt: (.seven_day_sonnet.resets_at // null),
+    weeklyOpusUsage: (.seven_day_opus.utilization // null),
+    weeklyOpusResetAt: (.seven_day_opus.resets_at // null),
     extraUsageEnabled: (.extra_usage.is_enabled // null),
     extraUsageLimit: (.extra_usage.monthly_limit // null),
     extraUsageUsed: (.extra_usage.used_credits // null),
@@ -80,6 +84,11 @@ EXTRA_USED=$(echo "$RESPONSE" | jq -r '.extra_usage.used_credits // "?"')
 EXTRA_LIMIT=$(echo "$RESPONSE" | jq -r '.extra_usage.monthly_limit // "?"')
 EXTRA_CURRENCY=$(echo "$RESPONSE" | jq -r '.extra_usage.currency // "USD"')
 
+SONNET=$(echo "$RESPONSE" | jq -r '.seven_day_sonnet.utilization // "-"')
+OPUS=$(echo "$RESPONSE" | jq -r '.seven_day_opus.utilization // "-"')
+
 echo "Session (5h): ${SESSION}%  (resets ${SESSION_RESET} UTC)"
 echo "Weekly  (7d): ${WEEKLY}%  (resets ${WEEKLY_RESET} UTC)"
+[[ "$SONNET" != "-" ]] && echo "  Sonnet (7d): ${SONNET}%"
+[[ "$OPUS" != "-" ]] && echo "  Opus   (7d): ${OPUS}%"
 echo "Extra usage:  ${EXTRA_CURRENCY} ${EXTRA_USED}/${EXTRA_LIMIT}"

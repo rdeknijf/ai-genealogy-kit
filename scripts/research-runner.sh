@@ -93,7 +93,7 @@ effective_weekly_ceiling() {
     local now reset_epoch elapsed_pct
     now=$(date +%s)
     reset_epoch=$(date -d "$reset_at" +%s 2>/dev/null) || { echo "95"; return; }
-    elapsed_pct=$(echo "scale=1; e = (1 - ($reset_epoch - $now) / 604800) * 100; if (e < 0) 0 else if (e > 100) 100 else e" | bc -l)
+    elapsed_pct=$(echo "scale=6; e = (1 - ($reset_epoch - $now) / 604800) * 100; scale=1; if (e < 0) 0 else if (e > 100) 100 else e / 1" | bc -l)
     echo "$elapsed_pct"
 }
 
@@ -110,6 +110,39 @@ over_budget() {
     ceiling=$(effective_weekly_ceiling)
     if (( $(echo "$weekly >= $ceiling" | bc -l) )); then
         log "Weekly usage ${weekly}% >= ceiling ${ceiling}% (proportional)"
+        return 0
+    fi
+    return 1
+}
+
+model_weekly_usage() {
+    local model="$1"
+    if [[ -z "$USAGE_CACHE" || ! -f "$USAGE_CACHE" ]]; then
+        echo "null"
+        return
+    fi
+    local key
+    case "$model" in
+        sonnet) key="weeklySonnetUsage" ;;
+        opus)   key="weeklyOpusUsage" ;;
+        *)      echo "null"; return ;;
+    esac
+    jq -r ".$key // \"null\"" "$USAGE_CACHE" 2>/dev/null || echo "null"
+}
+
+model_over_budget() {
+    local model="$1"
+    if ! has_usage_tracking; then
+        return 1
+    fi
+    refresh_usage
+    local usage ceiling
+    usage=$(model_weekly_usage "$model")
+    if [[ "$usage" == "null" ]]; then
+        return 1  # no separate bucket — uses aggregate only
+    fi
+    ceiling=$(effective_weekly_ceiling)
+    if (( $(echo "$usage >= $ceiling" | bc -l) )); then
         return 0
     fi
     return 1
@@ -133,8 +166,10 @@ if has_usage_tracking; then
     fi
     read -r cur_session cur_weekly <<< "$(check_usage)"
     eff_ceil=$(effective_weekly_ceiling)
+    sonnet_usage=$(model_weekly_usage sonnet)
+    opus_usage=$(model_weekly_usage opus)
     log "Ceilings: session=${SESSION_CEILING}%, weekly=${WEEKLY_CEILING}% (effective: ${eff_ceil}%)"
-    log "Current usage — session: ${cur_session}%, weekly: ${cur_weekly}%"
+    log "Current usage — session: ${cur_session}%, weekly: ${cur_weekly}%, sonnet: ${sonnet_usage}%, opus: ${opus_usage}%"
     if over_budget; then
         log "Already over budget. Exiting."
         exit 0
@@ -345,7 +380,9 @@ while [[ $session_num -lt $MAX_SESSIONS ]]; do
     read -r cur_session cur_weekly <<< "$(check_usage)"
     if has_usage_tracking; then
         eff_ceil=$(effective_weekly_ceiling)
-        log "--- Session $session_num/$MAX_SESSIONS (usage: session=${cur_session}%, weekly=${cur_weekly}%, ceiling=${eff_ceil}%) ---"
+        sn_u=$(model_weekly_usage sonnet)
+        op_u=$(model_weekly_usage opus)
+        log "--- Session $session_num/$MAX_SESSIONS (usage: session=${cur_session}%, weekly=${cur_weekly}%, sonnet=${sn_u}%, opus=${op_u}%, ceiling=${eff_ceil}%) ---"
     else
         log "--- Session $session_num/$MAX_SESSIONS ---"
     fi
@@ -379,6 +416,19 @@ print(format_for_prompt(state))
     # requires_model (or any linked OPEN finding's requires_model).
     # Falls back to sonnet if no hint is set.
     session_model=$(python3 scripts/research_db.py next-model --quiet 2>/dev/null || echo sonnet)
+
+    # Check per-model budget; fall back if the assigned model's bucket is exhausted
+    if model_over_budget "$session_model"; then
+        orig_model="$session_model"
+        alt_model=$( [[ "$session_model" == "sonnet" ]] && echo "opus" || echo "sonnet" )
+        if ! model_over_budget "$alt_model"; then
+            log "Model $orig_model over budget, falling back to $alt_model"
+            session_model="$alt_model"
+        else
+            log "Both models over per-model budget. Stopping."
+            break
+        fi
+    fi
     log "Session $session_num model: $session_model"
 
     # Launch claude -p piped through the live stream parser
