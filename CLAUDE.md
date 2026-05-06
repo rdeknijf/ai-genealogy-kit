@@ -232,13 +232,20 @@ When editing files in the public repo, review every line for accidental
 private content before committing. All binary files (images, PDFs, scans)
 must go through Git LFS in the private repo — never commit binaries directly.
 
-## Goals
+## Primary Goal — Kids' Pedigree
 
-1. Understand the current state of the family tree
-2. Identify gaps, dead ends, and unverified connections
-3. Systematically research and extend family lines
-4. Maintain a well-sourced, accurate genealogy
-5. Share the tree with family
+The default research objective is always: **fill and harden the direct
+ancestor pedigree of the kids** (Freya I501635, Balder I501886). Target
+generations 3-9+ with 100% filled and verified.
+
+- Coverage is measured from the kids: `coverage-score --root I501635 --generations 9`
+- When no specific task is given, the fallback is: find the generation with
+  the most gaps in the kids' pedigree and work on filling/verifying them
+- Direct ancestors' immediate families (siblings, spouses) are in scope when
+  they help verify the direct line (e.g., marriage records naming parents)
+- Never broaden collateral branches or non-blood relations unless explicitly asked
+- Note anything interesting (famous ancestors, unusual names, strange stories)
+  but don't let it divert from pedigree work
 
 ## File Organization
 
