@@ -182,6 +182,26 @@ No file lock needed — the DB is the source of truth.
 Note: `playwright-cli` uses named sessions (`-s=name`) for parallelism —
 no browser lock needed.
 
+## Research Strategies by Goal
+
+Match the record type to the question you're trying to answer. The wrong
+record type wastes time; the right one can answer multiple questions at once.
+
+| Goal | Primary record | Why |
+|------|---------------|-----|
+| **Find unknown parents** | **Marriage record** of the child | Names both parents (+ birthplaces, ages, occupations). One record = up to 4 new ancestors. Always try this first. |
+| **Extend a line backward** | **Marriage record** of the earliest known ancestor | Same logic — if you know X but not X's parents, find X's marriage record. |
+| **Verify a birth** | Birth record (post-1811) or church baptism (pre-1811) | Confirms date, place, parents. |
+| **Verify a death** | Death record | Often names parents and spouse — useful secondary confirmation of parent links. |
+| **Confirm a parent-child link** | Marriage record + birth record | Two independent sources naming the same parents = Tier B. |
+| **Break a pre-1811 wall** | Church baptism records in surrounding parishes | Before civil registration, try neighboring parishes, notarial archives, membership rolls. |
+
+**The marriage record rule:** when the goal is to discover unknown parents
+or extend the tree, search for **marriage records first**. They are the
+single highest-yield document in Dutch genealogy. A spouse's marriage record
+names both sets of parents and gives birthplaces that unlock further searches.
+This applies to ALL lines, not just specific families.
+
 ## Autonomous Research Rules
 
 These rules apply to research-runner sessions and any unattended research agents.
