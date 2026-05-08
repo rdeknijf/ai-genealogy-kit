@@ -35,6 +35,7 @@ def parse(path: Path) -> dict[str, Any]:
     result: dict[str, Any] | None = None
     assistant_texts: list[str] = []
     tool_calls: list[dict[str, Any]] = []
+    tool_results: list[str] = []
 
     with path.open() as f:
         for line in f:
@@ -61,6 +62,12 @@ def parse(path: Path) -> dict[str, Any]:
                                 "input": block.get("input", {}),
                             }
                         )
+            elif t == "user":
+                for block in ev.get("message", {}).get("content", []) or []:
+                    if isinstance(block, dict) and block.get("type") == "tool_result":
+                        content = block.get("content", "")
+                        if isinstance(content, str):
+                            tool_results.append(content)
             elif t == "result":
                 result = ev
 
@@ -83,12 +90,16 @@ def parse(path: Path) -> dict[str, Any]:
         if final_rqs:
             task_id = final_rqs[0]
         else:
-            # Tier 3: frequency across all tool calls + assistant text
+            # Tier 3: frequency across tool calls, assistant text, and tool results
             rq_counts: Counter[str] = Counter()
             for tc in tool_calls:
                 rq_counts.update(RQ_PATTERN.findall(json.dumps(tc)))
             for txt in assistant_texts:
                 rq_counts.update(RQ_PATTERN.findall(txt))
+            for tr in tool_results:
+                rqs = RQ_PATTERN.findall(tr)
+                if len(set(rqs)) <= 2:
+                    rq_counts.update(rqs)
             task_id = rq_counts.most_common(1)[0][0] if rq_counts else None
 
     final_text = assistant_texts[-1] if assistant_texts else ""
