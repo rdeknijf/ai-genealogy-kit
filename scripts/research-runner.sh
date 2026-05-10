@@ -203,8 +203,9 @@ You have a HARD LIMIT of MAX_TURNS_VALUE tool-call turns. You CANNOT see
 the counter, so you must manage your own budget:
 
 - **Turns 1-8:** Assess (read queue, check recent findings, understand the task)
-- **Turns 9-55:** Lookup + Document INLINE (archive searches, sub-agents —
-  write each finding to DB IMMEDIATELY after discovery, not later)
+- **Turns 9-55:** Lookup + Document INLINE (spawn Agent subagents for archive
+  searches — they run in parallel and don't count against YOUR turn budget.
+  Write each finding to DB IMMEDIATELY after discovery, not later)
 - **Turns 56-68:** Apply GEDCOM (optional — only if you have documented findings
   that need GEDCOM edits. Skip entirely if running low on turns)
 - **Turns 69-MAX_TURNS_VALUE:** Write your OUTPUT SUMMARY (see below)
@@ -245,11 +246,18 @@ Run 1 full research cycle with 3 phases:
 
 1. **Assess** — use `research_db.py get-tasks` and `get-person` to understand the
    task context: people IDs, current data tier, research goals, and where to look.
-   Understand what's known vs unknown.
+   Understand what's known vs unknown. Do NOT write custom scripts to explore the
+   codebase or analyze the GEDCOM — the tools you need are `research_db.py` and
+   the skills in `.claude/skills/`. Keep assessment to ≤8 turns.
 
 2. **Lookup + Document** — search archives using the skills in `.claude/skills/`
-   (wiewaswie.md, openarchieven.md, gelders-archief.md, etc.). Use sub-agents
-   for parallel lookups. Follow the "Where to look" guidance in the queue item.
+   (wiewaswie.md, openarchieven.md, gelders-archief.md, etc.).
+   **YOU MUST use the Agent tool to spawn 2-3 subagents for parallel archive
+   lookups.** Do NOT search archives serially from the main session — that
+   wastes turns. Each subagent does one lookup and returns structured results.
+   Example: `Agent({description: "Search OpenArchieven for X marriage",
+   subagent_type: "general-purpose", prompt: "..."})`.
+   Follow the "Where to look" guidance in the queue item.
    Also use web search for specialized sources.
    **CRITICAL**: after each successful lookup, IMMEDIATELY write the finding to DB:
    `python scripts/research_db.py add-finding '<json>'`
@@ -412,22 +420,37 @@ print(format_for_prompt(state))
     # Measure coverage before session
     coverage_before=$(python3 scripts/research_db.py coverage-score --gedcom private/tree.ged --quiet 2>/dev/null || echo "")
 
+    # Clear current_task if it points to a terminal/blocked task (may have
+    # been re-added by the previous session's state merge)
+    if [[ -f "$STATE_FILE" ]]; then
+        PYTHONPATH=scripts python3 -c "
+import sqlite3
+from pathlib import Path
+from session_state import load_state, save_state
+state = load_state(Path('$STATE_FILE'))
+task_id = state.get('current_task')
+if task_id:
+    db = sqlite3.connect('private/genealogy.db')
+    row = db.execute('SELECT status FROM research_tasks WHERE id = ?', (task_id,)).fetchone()
+    if not row or row[0] in ('BLOCKED', 'DONE', 'SUPERSEDED'):
+        state.pop('current_task', None)
+        state['session_count_on_task'] = 0
+        save_state(Path('$STATE_FILE'), state)
+    db.close()
+" 2>/dev/null || true
+    fi
+
     # Pick the model for this session based on the next queued task's
     # requires_model (or any linked OPEN finding's requires_model).
     # Falls back to sonnet if no hint is set.
     session_model=$(python3 scripts/research_db.py next-model --quiet 2>/dev/null || echo sonnet)
 
-    # Check per-model budget; fall back if the assigned model's bucket is exhausted
+    # Stop if the assigned model's per-model budget is exhausted.
+    # No cross-model fallback — model routing is intentional (tasks declare
+    # requires_model). Running Opus on Sonnet-budgeted tasks wastes money.
     if model_over_budget "$session_model"; then
-        orig_model="$session_model"
-        alt_model=$( [[ "$session_model" == "sonnet" ]] && echo "opus" || echo "sonnet" )
-        if ! model_over_budget "$alt_model"; then
-            log "Model $orig_model over budget, falling back to $alt_model"
-            session_model="$alt_model"
-        else
-            log "Both models over per-model budget. Stopping."
-            break
-        fi
+        log "Model $session_model over per-model budget. Stopping."
+        break
     fi
     log "Session $session_num model: $session_model"
 
@@ -485,59 +508,6 @@ print(format_for_prompt(state))
     total_findings=$((total_findings + new_findings))
     log "New findings this session: $new_findings (DB total: $current_findings)"
 
-    # Auto-block stalled tasks: if the last 2 runs on the same task each produced ≤1 finding,
-    # mark the task BLOCKED. Counts actual DB findings created during each run's time window
-    # (not F-NNN regex on summary text, which misses findings from timed-out sessions).
-    if [[ "$picked_task" != "?" ]]; then
-        stall_count=$(python3 -c "
-import sqlite3
-db = sqlite3.connect('private/genealogy.db')
-db.execute('PRAGMA busy_timeout = 5000')
-runs = db.execute(
-    'SELECT id, started_at, ended_at FROM task_runs WHERE task_id = ? ORDER BY id DESC LIMIT 2',
-    ('$picked_task',)
-).fetchall()
-if len(runs) >= 2:
-    low = 0
-    for run_id, started, ended in runs:
-        if started:
-            end = ended or '9999-12-31'
-            # Normalize ISO 'T' separator to space for consistent comparison with findings.created_at
-            s_norm = started.replace('T', ' ').rstrip('Z')
-            e_norm = end.replace('T', ' ').rstrip('Z')
-            count = db.execute(
-                'SELECT COUNT(*) FROM findings WHERE created_at >= ? AND created_at <= ?',
-                (s_norm, e_norm)
-            ).fetchone()[0]
-        else:
-            count = 0
-        if count <= 1:
-            low += 1
-    print(low)
-else:
-    print(0)
-db.close()
-" 2>/dev/null || echo 0)
-        if [[ "$stall_count" -ge 2 ]]; then
-            log "Auto-blocking $picked_task: 2 consecutive sessions with ≤1 finding"
-            python3 scripts/research_db.py update-task "$picked_task" \
-                --status BLOCKED \
-                --note "Auto-blocked by runner: 2 consecutive low-yield sessions on $(date '+%Y-%m-%d')" \
-                2>/dev/null || true
-            # Clear current_task in state file so next session picks a new task
-            if [[ -f "$STATE_FILE" ]]; then
-                PYTHONPATH=scripts python3 -c "
-from pathlib import Path
-from session_state import load_state, save_state
-s = load_state(Path('$STATE_FILE'))
-s.pop('current_task', None)
-s['session_count_on_task'] = 0
-save_state(Path('$STATE_FILE'), s)
-" 2>/dev/null || true
-            fi
-        fi
-    fi
-
     # Log coverage delta
     if [[ -n "$coverage_before" && -n "$coverage_after" ]]; then
         log "Coverage: ${coverage_before}% → ${coverage_after}%"
@@ -572,6 +542,57 @@ elif '${picked_task}' != '?':
     merged = merge_state(existing, update)
     save_state(state_path, merged)
 " 2>/dev/null || true
+    fi
+
+    # Auto-block stalled tasks: if the last 2 runs on the same task each produced ≤1 finding,
+    # mark the task BLOCKED. Runs AFTER state merge so the block isn't undone.
+    if [[ "$picked_task" != "?" ]]; then
+        stall_count=$(python3 -c "
+import sqlite3
+db = sqlite3.connect('private/genealogy.db')
+db.execute('PRAGMA busy_timeout = 5000')
+runs = db.execute(
+    'SELECT id, started_at, ended_at FROM task_runs WHERE task_id = ? ORDER BY id DESC LIMIT 2',
+    ('$picked_task',)
+).fetchall()
+if len(runs) >= 2:
+    low = 0
+    for run_id, started, ended in runs:
+        if started:
+            end = ended or '9999-12-31'
+            s_norm = started.replace('T', ' ').rstrip('Z')
+            e_norm = end.replace('T', ' ').rstrip('Z')
+            count = db.execute(
+                'SELECT COUNT(*) FROM findings WHERE created_at >= ? AND created_at <= ?',
+                (s_norm, e_norm)
+            ).fetchone()[0]
+        else:
+            count = 0
+        if count <= 1:
+            low += 1
+    print(low)
+else:
+    print(0)
+db.close()
+" 2>/dev/null || echo 0)
+        if [[ "$stall_count" -ge 2 ]]; then
+            log "Auto-blocking $picked_task: 2 consecutive sessions with ≤1 finding"
+            python3 scripts/research_db.py update-task "$picked_task" \
+                --status BLOCKED \
+                --note "Auto-blocked by runner: 2 consecutive low-yield sessions on $(date '+%Y-%m-%d')" \
+                2>/dev/null || true
+            # Clear current_task AFTER state merge so it can't be re-added
+            if [[ -f "$STATE_FILE" ]]; then
+                PYTHONPATH=scripts python3 -c "
+from pathlib import Path
+from session_state import load_state, save_state
+s = load_state(Path('$STATE_FILE'))
+s.pop('current_task', None)
+s['session_count_on_task'] = 0
+save_state(Path('$STATE_FILE'), s)
+" 2>/dev/null || true
+            fi
+        fi
     fi
 
     # Brief cooldown to let usage cache update
