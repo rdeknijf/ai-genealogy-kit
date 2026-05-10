@@ -1,4 +1,6 @@
-# AI Genealogy Kit
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Purpose
 
@@ -15,6 +17,26 @@ If `CLAUDE.local.md` exists, read and follow its instructions at session start.
 It contains project-specific overrides (family-specific research notes, server
 details, etc.). This file is gitignored — create your own from the example if
 needed.
+
+## Development Commands
+
+```bash
+# Tests (pytest, scripts dir on pythonpath)
+python -m pytest                       # all tests
+python -m pytest tests/test_session_state.py  # single file
+python -m pytest -k "test_merge"       # by name pattern
+
+# Lint
+ruff check scripts/ tests/
+ruff format --check scripts/ tests/
+
+# Research runner (always via Docker, never on host)
+cd services/genealogy-runner && docker compose run --rm genealogy-runner -c \
+    "./scripts/research-runner.sh --sessions 5 --usage-tracking --weekly-ceiling proportional"
+
+# Dry-run (validates config without launching sessions)
+./scripts/research-runner.sh --dry-run --sessions 1
+```
 
 ## GEDCOM
 
@@ -239,6 +261,33 @@ Always prefer HTTP API access over Playwright browser automation — APIs are
 or updating datasource skills, check for API endpoints first. Only fall back
 to Playwright when no API exists.
 
+## Research Runner Architecture
+
+The autonomous research runner (`scripts/research-runner.sh`) runs inside
+Docker (`services/genealogy-runner/`) and loops through `claude -p` sessions.
+
+Key components:
+
+- **`research-runner.sh`** — main loop: budget checks → model selection →
+  session launch → state merge → auto-block stalled tasks
+- **`parse_session_stream.py`** — live stream parser that writes `.jsonl`,
+  updates `heartbeat.json`, and kills stuck sessions
+- **`parse_session_log.py`** — post-hoc parser: extracts task ID, cost,
+  exit reason from completed `.jsonl` files
+- **`session_state.py`** — structured JSON state handoff between sessions
+  (`merge_state`, `extract_state_from_log`, `format_for_prompt`)
+- **`check_usage.sh`** — queries Claude OAuth API for usage percentages
+
+Session flow: each `claude -p` session gets the research prompt with
+`MAX_TURNS_VALUE` substituted, picks a task from the DB, searches archives
+via subagents, writes findings inline, and emits a `STATE_JSON` block in
+its output summary that gets merged into `private/research/session_state.json`.
+
+Per-model budget tracking: Sonnet and Opus have separate usage buckets.
+The runner calls `next-model` (from `research_db.py`) to pick the model
+based on the next task's `requires_model` field, then checks
+`model_over_budget` before launching.
+
 ## Public vs Private Content
 
 The public repo (`ai-genealogy-kit`) must NEVER contain:
@@ -270,14 +319,23 @@ generations 3-9+ with 100% filled and verified.
 ## File Organization
 
 - `private/` — personal data (own git repo with LFS, gitignored by public repo)
-  - `*.ged` — GEDCOM files
-  - `research/FINDINGS.md` — research findings
-  - `sources/` — scanned documents, certificates, evidence
+  - `tree.ged` — working GEDCOM file
+  - `genealogy.db` — SQLite research database (source of truth)
+  - `research/session_state.json` — runner state handoff between sessions
+  - `research/logs/` — session `.jsonl` logs + `runner.log` + `heartbeat.json`
   - `scans/` — Playwright screenshots and downloaded archive scans
-  - `media/` — photos and scans
+- `scripts/` — Python tools and the research runner
+  - `research_db.py` — central CLI for DB operations
+  - `research-runner.sh` — autonomous session loop (run via Docker)
+  - `session_state.py` — state merge logic
+  - `parse_session_stream.py` / `parse_session_log.py` — session parsers
+  - `openarchieven_search.py`, `wiewaswie_search.py`, etc. — archive API wrappers
+  - `fan_chart.py` — SVG pedigree visualization
+  - `schema.sql` — DB schema (used by tests and `init_db.py`)
+- `services/genealogy-runner/` — Docker compose for the runner container
 - `research/DATA_SOURCES.md` — catalog of Dutch genealogy archives
-- `scripts/` — Python tools for GEDCOM analysis (`analyze_gedcom.py`) and visualization (`fan_chart.py`)
-- `.claude/skills/` — data source and research workflow skills
+- `.claude/skills/` — one skill per data source + workflow skills
+- `tests/` — pytest suite (uses in-memory SQLite with `schema.sql`)
 
 All binary files in `private/` are tracked by Git LFS. Before committing
 any new binary (image, PDF, scan), verify LFS tracking with `git lfs track`.
