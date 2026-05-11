@@ -39,6 +39,9 @@ scripts/apply_meta_corrections.py
 # Archives
 *.zip
 
+# Betty static site output
+output/
+
 # Python
 __pycache__/
 *.pyc

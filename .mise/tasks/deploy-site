@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# mise description="Build Betty static site from GEDCOM and deploy to buckland"
+set -euo pipefail
+
+PROJ_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+cd "$PROJ_DIR"
+
+REMOTE_HOST="${BETTY_REMOTE_HOST:-buckland-ext}"
+REMOTE_DIR="${BETTY_REMOTE_DIR:-/home/rdeknijf/services/betty-site/www}"
+GED_FILE="private/tree.ged"
+GRAMPS_FILE="private/tree.gramps"
+
+echo "=== Step 1: Convert GEDCOM to Gramps XML ==="
+python3 scripts/gedcom_to_betty.py "$GED_FILE" "$GRAMPS_FILE"
+
+echo ""
+echo "=== Step 2: Generate static site with Betty ==="
+source .venv/bin/activate
+betty generate
+deactivate 2>/dev/null || true
+
+echo ""
+echo "=== Step 3: Deploy to $REMOTE_HOST ==="
+ssh "$REMOTE_HOST" "mkdir -p $REMOTE_DIR"
+rsync -a --delete --info=progress2 output/www/ "$REMOTE_HOST:$REMOTE_DIR/"
+
+echo ""
+echo "=== Done! Site deployed to $REMOTE_HOST:$REMOTE_DIR ==="

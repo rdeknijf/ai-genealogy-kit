@@ -1,0 +1,19 @@
+url: https://genealogy.deknijf.com
+title:
+  en: De Knijf Family Tree
+  nl: Stamboom De Knijf
+author:
+  en: Rutger de Knijf
+  nl: Rutger de Knijf
+clean_urls: true
+lifetime_threshold: 100
+locales:
+  - locale: nl-NL
+  - locale: en-US
+extensions:
+  gramps:
+    configuration:
+      family_trees:
+        - file: ./private/tree.gramps
+  privatizer: {}
+  cotton-candy: {}
