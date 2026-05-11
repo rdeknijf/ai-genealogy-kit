@@ -25,10 +25,10 @@ No login or authentication required for any access method.
 
 1,108+ Jansen person records across multiple publications. Key trees:
 
-- **Stamboom De Vriesf en verwanten** — dedicated Jansenf family tree
-- **Genealogie Van der Mersch-De Vriesf** — Jansenf genealogy
+- **Stamboom De Vriesf en verwanten** — dedicated Knijff family tree
+- **Genealogie Van der Mersch-De Vriesf** — Knijff genealogy
 - **Stamboom Glasmeier-Buhrs** — has Jan de Vries (1780-1849) with
-  parents Jan Pieterse Jansenf & Klaasje Hogervegt
+  parents Jan Pieterse Knijff & Klaasje Hogervegt
 - **Genealogie Mostert** — van der Jansen records
 - **Stamboom Peek** — Jansen records including Jan Jorisz Jansen
 - **Stamboom Broere** — Jan Jansz Jansen (1714-1806)
@@ -301,7 +301,7 @@ https://www.genealogieonline.nl/zoeken/?q={surname}&t=person&output=xml
 
 ## Spelling variants
 
-The site suggests synonyms: Jansenf, Jansent, Kniffen. Try all variants.
+The site suggests synonyms: Knijff, Jansent, Kniffen. Try all variants.
 
 ## URL structure
 

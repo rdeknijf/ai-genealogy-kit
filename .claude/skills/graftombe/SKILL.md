@@ -34,7 +34,7 @@ sets of cemeteries. Neither is a superset of the other:
 
 - Online-begraafplaatsen is larger (1.2M+ persons, 1,700+ cemeteries)
 - Graftombe has cemeteries and family groupings the other lacks —
-  e.g. Woerden (Oud) Hoge Wal Jansenf family grave
+  e.g. Woerden (Oud) Hoge Wal Knijff family grave
 - Plain-surname variants without "de" prefix surface more naturally on
   Graftombe
 - Photos on Graftombe are **catalog-only** (Foto nr like "SANY3023");
@@ -117,7 +117,7 @@ Returns cemeteries matching the location, each linked to
 
 ## Example queries
 
-**Find a known Jansenf burial:**
+**Find a known Knijff burial:**
 
 ```bash
 curl -s 'https://graftombe.nl/names/search?surname=Jansen&submit=Zoeken' -L \

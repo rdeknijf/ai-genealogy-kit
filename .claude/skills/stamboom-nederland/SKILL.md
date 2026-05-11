@@ -53,7 +53,7 @@ Returns up to 50 results per page as HTML. Each result shows:
 **Example searches:**
 
 ```
-# Search for "Jansen" (returns Jansen, Jansenf, van der Jansen variants)
+# Search for "Jansen" (returns Jansen, Knijff, van der Jansen variants)
 WebFetch -> https://stamboomnederland.nl/shared/search?searchTerm=Jansen
 
 # Search for "van den Berg"
@@ -125,7 +125,7 @@ explore the full tree.
 - The `searchTerm` parameter searches across all fields (name, place, notes,
   patronymic) — no separate field filtering via URL
 - Extra URL parameters (like `firstName`) are silently ignored
-- Name variants are included in results (Jansen returns Jansenf, van der Jansen, etc.)
+- Name variants are included in results (Jansen returns Knijff, van der Jansen, etc.)
 
 ## Output format
 

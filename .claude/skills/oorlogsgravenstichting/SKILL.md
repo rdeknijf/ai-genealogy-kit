@@ -67,7 +67,7 @@ Filterable attributes (verified working):
 | Field | Example |
 |-------|---------|
 | `first_name` | `first_name = Dirk` |
-| `last_name` | `last_name = Jansenf` |
+| `last_name` | `last_name = Knijff` |
 | `gender` | `gender = Man` / `gender = Vrouw` |
 | `place_of_birth` | `place_of_birth = Rotterdam` |
 | `place_of_death` | `place_of_death = Auschwitz` |
@@ -83,7 +83,7 @@ NOT filterable (only searchable via `q`): `insertion`, `rank`,
 
 ### Combined filter example
 
-Find any "Jansenf" who died at the Grebbeberg in May 1940:
+Find any "Knijff" who died at the Grebbeberg in May 1940:
 
 ```bash
 curl -s -X POST "$URL" \
@@ -91,7 +91,7 @@ curl -s -X POST "$URL" \
   -H 'Content-Type: application/json' \
   -d '{
     "q":"",
-    "filter":"last_name = Jansenf AND date_of_death = \"11-05-1940\"",
+    "filter":"last_name = Knijff AND date_of_death = \"11-05-1940\"",
     "limit":5
   }'
 ```
@@ -109,7 +109,7 @@ curl -s -X POST 'https://oorlogsgravenstichting.search.devsandbox.be/indexes/per
 ```
 
 Returns 10 total hits — including Dirk van der Jansen (KNIL, Birmaspoorweg,
-died Kanchanaburi 1943) and William Martinus Jansenf (Grebbeberg, 11 May 1940).
+died Kanchanaburi 1943) and William Martinus Knijff (Grebbeberg, 11 May 1940).
 
 ## Response schema
 
@@ -228,7 +228,7 @@ War Graves Foundation, based on military records and civil registry data.
 - **Meilisearch `q` is OR-based** across words — for tight "first + last"
   matching, use a filter on `last_name` and put only the first name in `q`,
   or use both as filters.
-- **`last_name` filter is case-sensitive and exact** — `Jansen` and `Jansenf`
+- **`last_name` filter is case-sensitive and exact** — `Jansen` and `Knijff`
   are different. Run separate queries for spelling variants.
 - **Bearer token may rotate** — if auth fails, re-extract from the
   `/exact-zoeken` page's inline JavaScript (search for `devsandbox.be`).

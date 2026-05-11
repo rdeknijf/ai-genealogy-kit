@@ -110,8 +110,8 @@ returns the combined set.
 GET https://www.erelijst.nl/zoeken?title=Jansen
 -> 3 results:
   - Dirk van der Jansen (Den Haag 1919 -> Kanchanaburi 1943, KNIL Soldaat M.M.D.)
-  - Leonardus Albertus Jansenf (Nijmegen 1915 -> Atlantische Oceaan 1942, KL Sergeant)
-  - Willem Martinus Jansenf (Oudenbosch 1914 -> Kester 1940, KL)
+  - Leonardus Albertus Knijff (Nijmegen 1915 -> Atlantische Oceaan 1942, KL Sergeant)
+  - Willem Martinus Knijff (Oudenbosch 1914 -> Kester 1940, KL)
 ```
 
 Dirk van der Jansen is directly relevant to the Anton Jansen (I0018) research

@@ -11,7 +11,7 @@ description: |
   searching for: other researchers' trees, parallel genealogies of a
   surname, European ancestors, French genealogy, Belgian genealogy, or
   cross-references for Dutch brick walls (especially RQ-014 Bakker,
-  Jansenf / de Vries, Van der Kant, Buijtenhuijs, Kemmann, Ferron,
+  Knijff / de Vries, Van der Kant, Buijtenhuijs, Kemmann, Ferron,
   Peters). Also trigger on: "search geneanet", "check geneanet",
   "geneanet tree", "parallel trees", "published European tree",
   "French genealogy", "Belgian genealogy", "/geneanet", or when extending
@@ -271,9 +271,9 @@ archive and treat as Tier B when the collection is named.
 # RQ-014 brick wall — Bakker in Noord-Holland, early 19th century
 playwright-cli -s=geneanet goto "https://en.geneanet.org/fonds/individus/?go=1&nom=Bakker&place__0__=Enkhuizen&type_periode=between&from=1780&to=1870"
 
-# Jansenf / de Vries spelling variants — search each manually because
+# Knijff / de Vries spelling variants — search each manually because
 # the name-variant toggle is Premium-only
-playwright-cli -s=geneanet goto "https://en.geneanet.org/fonds/individus/?go=1&nom=Jansenf&prenom=Cornelis"
+playwright-cli -s=geneanet goto "https://en.geneanet.org/fonds/individus/?go=1&nom=Knijff&prenom=Cornelis"
 playwright-cli -s=geneanet goto "https://en.geneanet.org/fonds/individus/?go=1&nom=Jansen"
 playwright-cli -s=geneanet goto "https://en.geneanet.org/fonds/individus/?go=1&nom=de+Jansen"
 
@@ -385,7 +385,7 @@ For archival register hits:
 - **Two subdomains, one database.** `gw.geneanet.org/<owner>` is a
   separate GeneWeb-based subdomain per tree. It rarely triggers
   Cloudflare itself once the main `en.geneanet.org` cookie is set.
-- **No built-in name variants.** Jansen ↔ Jansenf ↔ de Vries are only
+- **No built-in name variants.** Jansen ↔ Knijff ↔ de Vries are only
   applied with a Premium toggle. For anonymous use, search each
   spelling variant manually and merge results.
 - **Language subdomains are cosmetic.** `en.`, `fr.`, and `nl.` all

@@ -362,4 +362,4 @@ fall back to Playwright browser automation at
   the detail page to the search context. Using `nav_id=0-1` works for
   direct access; the `index` parameter is optional.
 - **Spelling variants:** Pre-1811 records use variable spellings.
-  Search for both `Jansen` and `van der Jansen`, `Jansenf`, etc.
+  Search for both `Jansen` and `van der Jansen`, `Knijff`, etc.

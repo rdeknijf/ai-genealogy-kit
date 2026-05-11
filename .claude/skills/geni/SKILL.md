@@ -8,7 +8,7 @@ description: |
   pages are Incapsula-protected, so use playwright-cli session `-s=geni`
   for those. Complements the `myheritage` skill — although MyHeritage
   owns Geni, the datasets are treated as separate products. Use this
-  skill to find parallel trees for Dutch surnames (Jansenf, Bakker,
+  skill to find parallel trees for Dutch surnames (Knijff, Bakker,
   Peters, Van der Kant) that don't appear in MyHeritage SmartMatches.
 ---
 
@@ -24,7 +24,7 @@ owned by the same company.
 
 The `myheritage` skill covers Rutger's authenticated MyHeritage family
 site (SmartMatches + SuperSearch). Geni is a different product with a
-different data pool. Worth checking both — e.g., a "Aagje Jansenf,
+different data pool. Worth checking both — e.g., a "Aagje Knijff,
 Kamerik, Utrecht, NL, ca. 1748-1808" profile surfaced on Geni that
 isn't in the MyHeritage match results for the same person.
 
@@ -33,7 +33,7 @@ isn't in the MyHeritage match results for the same person.
 ### Search — free, curl-friendly
 
 ```bash
-curl -sL 'https://www.geni.com/search?search_type=people&names=Jansenf' \
+curl -sL 'https://www.geni.com/search?search_type=people&names=Knijff' \
   -A 'Mozilla/5.0'
 ```
 
@@ -61,11 +61,11 @@ playwright session `-s=geni` bypasses it after the first manual pass.
 ## Example query
 
 ```bash
-curl -sL 'https://www.geni.com/search?search_type=people&names=Jansenf' \
+curl -sL 'https://www.geni.com/search?search_type=people&names=Knijff' \
   -A 'Mozilla/5.0' | grep -oE 'profile-layout-grid[^>]*>[^<]+' | head -20
 ```
 
-Top Jansenf match: profile ID `6000000013090709971`.
+Top Knijff match: profile ID `6000000013090709971`.
 
 ## What's paywalled / inaccessible
 

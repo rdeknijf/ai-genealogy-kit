@@ -1,16 +1,16 @@
 ---
 name: hansknijff-com
 description: |
-  Navigate and extract data from hansknijff.com, Hans Jansenf's genealogy website
-  covering the Jansenf/de Vries/van der Jansenf family. Use when: researching Jansenf
-  ancestors, cross-referencing the Woerden Jansenf line, looking up source documents,
+  Navigate and extract data from hansknijff.com, Hans Knijff's genealogy website
+  covering the Knijff/de Vries/van der Knijff family. Use when: researching Knijff
+  ancestors, cross-referencing the Woerden Knijff line, looking up source documents,
   or checking name variant connections. The site uses HTML framesets — always fetch
   the inner frame URL (without "frameset" in the name) to get actual content.
 ---
 
-# hansknijff.com — Jansenf Family Genealogy
+# hansknijff.com — Knijff Family Genealogy
 
-Hans Jansenf's personal genealogy website. Covers Jansenf families primarily from
+Hans Knijff's personal genealogy website. Covers Knijff families primarily from
 the Woerden/Linschoten/Harmelen area, 1545–present. Last updated Jan 2026.
 
 Contact: hamalejo@gmail.com
@@ -34,7 +34,7 @@ Pattern: take the filename after the `?` in the frameset URL.
 
 | Section | Content URL (use this, not frameset) |
 |---------|--------------------------------------|
-| Parenteel Arien Jansenf | `https://hansknijff.com/stamboom%20knijff/familie%20knijff-000994-p.htm` |
+| Parenteel Arien Knijff | `https://hansknijff.com/stamboom%20knijff/familie%20knijff-000994-p.htm` |
 | Parenteel Jan van Kempen | `https://hansknijff.com/stamboom%20knijff/familie%20knijff-000398-p.htm` |
 | Kwartierstaat Hans | `https://hansknijff.com/stamboom%20knijff/familie%20knijff-0000069-k.htm` |
 | Kwartierstaat Martha | `https://hansknijff.com/stamboom%20knijff/familie%20knijff-0000082-k.htm` |
@@ -53,16 +53,16 @@ Pattern: take the filename after the `?` in the frameset URL.
 
 | Section | Content URL |
 |---------|------------|
-| Jansenf Harmelen | `https://hansknijff.com/Jansenf%20Harmelen/knijff%20harmelen-000876-p.htm` |
-| Jansenf Utrecht (16th c.) | `https://hansknijff.com/Jansenf%20Utrecht/knijff%20utrecht%20booth3start.htm` |
+| Knijff Harmelen | `https://hansknijff.com/Knijff%20Harmelen/knijff%20harmelen-000876-p.htm` |
+| Knijff Utrecht (16th c.) | `https://hansknijff.com/Knijff%20Utrecht/knijff%20utrecht%20booth3start.htm` |
 
 ### Special Pages
 
 | Section | URL |
 |---------|-----|
-| Name variants (Naamsverschrijvingen) | `https://hansknijff.com/Jansenfdeknijff/index.html` |
+| Name variants (Naamsverschrijvingen) | `https://hansknijff.com/Knijffdeknijff/index.html` |
 | Booth Collection | `https://www.hansknijff.com/Booth/index.html` |
-| Maria Jansenf mystery | `https://hansknijff.com/MariaJansenf/index.html` |
+| Maria Knijff mystery | `https://hansknijff.com/MariaKnijff/index.html` |
 | Documents archive (page 1) | `https://hansknijff.com/dossiers/page1.html` |
 | Documents archive (page 2) | `https://hansknijff.com/dossiers/page2.html` |
 | Documents archive (page 3) | `https://hansknijff.com/dossiers/page3.html` |
@@ -70,24 +70,24 @@ Pattern: take the filename after the `?` in the frameset URL.
 
 ## Content Summary
 
-### Parenteel Arien Jansenf (main tree)
+### Parenteel Arien Knijff (main tree)
 
-The largest section. Descends from Aert Jansenf (~1545) through 8+
+The largest section. Descends from Aert Knijff (~1545) through 8+
 generations. Covers the Woerden tile baker families and all branches
-including the Delft "van der Jansenf" and Alphen "de Vries" offshoots.
+including the Delft "van der Knijff" and Alphen "de Vries" offshoots.
 A GEDCOM export of this tree is available for download on the site.
 
-### Jansenf Harmelen (separate family)
+### Knijff Harmelen (separate family)
 
-Different Jansenf family from Jan Jansenf (~1620, Reijerscop). Catholic
+Different Knijff family from Jan Knijff (~1620, Reijerscop). Catholic
 (vs. Protestant Woerden line). Covers 9 generations. Concentrated in
 Harmelen, Veldhuizen, Reijerscop, Montfoort area.
 
-### Jansenf Utrecht / Booth Collection
+### Knijff Utrecht / Booth Collection
 
-Based on Het Utrechts Archief materials collected by Booth. Traces Jansenfs
-back to 1108 (Ausfridus Jansenf as witness to Bishop of Utrecht). Connects
-to Antwerp (~1575), Friesland branches. Oldest known Jansenf records.
+Based on Het Utrechts Archief materials collected by Booth. Traces Knijffs
+back to 1108 (Ausfridus Knijff as witness to Bishop of Utrecht). Connects
+to Antwerp (~1575), Friesland branches. Oldest known Knijff records.
 
 ### Documents Archive
 
@@ -98,7 +98,7 @@ regional archive (W054 series).
 
 ## Key Connection to de Vries
 
-Jan Pieterse Jansenf (b. Utrecht 16 Sep 1742, d. Koudekerk Dec 1806) is
+Jan Pieterse Knijff (b. Utrecht 16 Sep 1742, d. Koudekerk Dec 1806) is
 the branching point. When he moved to Alphen aan den Rijn, civil registry
 officials changed the name to "de Vries" (added prefix, dropped second f).
 See the "Naamsverschrijvingen" page on the site for the full analysis.

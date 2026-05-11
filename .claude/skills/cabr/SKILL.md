@@ -154,7 +154,7 @@ curl -sA "Mozilla/5.0" \
   "https://rest.spinque.com/4/oorlogvoorderechter/api/nadere_toegang/e/actor_search/p/query/jansen/results,count?config=production&count=10"
 ```
 
-Returns 10 of 10 total hits (all Jansen/Jansenf spellings), including:
+Returns 10 of 10 total hits (all Jansen/Knijff spellings), including:
 
 - Theodorus Jansen (1900-06-03, Nijmegen) — identifier 300018 — probability 1.0
 - Wilhelmina Jansen (1897-05-13, Rotterdam) — identifier 526165

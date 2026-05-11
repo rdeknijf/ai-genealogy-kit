@@ -91,12 +91,12 @@ nouns. Title Case (capitalizing every major word) is English.
 
 **Before:**
 > Een Naam als een Lemmet
-> De Laatste Woerdense Jansenfs
+> De Laatste Woerdense Knijffs
 > De Gouden Eeuw Pannenbakkers
 
 **After:**
 > Een naam als een lemmet
-> De laatste Woerdense Jansenfs
+> De laatste Woerdense Knijffs
 > De Gouden Eeuw-pannenbakkers
 
 "Gouden Eeuw" stays capitalized — it's a proper noun (historical period).
@@ -129,11 +129,11 @@ period-appropriate vocabulary is fine ("poniaard" for a medieval dagger,
 "schout" for a pre-1811 official).
 
 **Before:**
-> Een Naam als een Lemmet — de achternaam Jansenf is het Middelnederlandse
+> Een Naam als een Lemmet — de achternaam Knijff is het Middelnederlandse
 > woord voor een poniaard, een puntig steekwapen.
 
 **After:**
-> De achternaam Jansenf is het oude woord voor mes — een lang steekwapen.
+> De achternaam Knijff is het oude woord voor mes — een lang steekwapen.
 
 
 ### 5. Anglo-centric framing

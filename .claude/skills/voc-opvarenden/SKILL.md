@@ -8,7 +8,7 @@ description: |
   "search VOC records", "VOC crew", "VOC opvarenden", "sailed to Batavia",
   "Dutch East India Company", "VOC soldier", "VOC sailor", "/voc-opvarenden",
   or when looking for ancestors who may have sailed with the VOC. Also use when
-  checking Daniel Pieterse Jansen (1704, Woerden) or any Jansen/Jansenf VOC
+  checking Daniel Pieterse Jansen (1704, Woerden) or any Jansen/Knijff VOC
   connections. No login required.
 ---
 
@@ -53,12 +53,12 @@ Each group has `rows[]` with `recordID` (UUID) and inline `fields`.
 curl -s "https://service.archief.nl/hub3/api/nt/nt00444?q=Jansen" \
   -H "User-Agent: Mozilla/5.0" -H "Accept: application/json"
 
-# Search Jansenf (different people! 33 crew + 1 beneficiary)
-curl -s "https://service.archief.nl/hub3/api/nt/nt00444?q=Jansenf" \
+# Search Knijff (different people! 33 crew + 1 beneficiary)
+curl -s "https://service.archief.nl/hub3/api/nt/nt00444?q=Knijff" \
   -H "User-Agent: Mozilla/5.0" -H "Accept: application/json"
 ```
 
-**Always search both `Jansen` and `Jansenf`** — different spelling variants
+**Always search both `Jansen` and `Knijff`** — different spelling variants
 appear as different individuals in the index.
 
 ## Step 2: Get record detail
@@ -75,7 +75,7 @@ curl -s "https://service.archief.nl/hub3/api/nt/nt00444/RECORD_UUID" \
 | `prs_voornamen` | First name | Aart |
 | `prs_patroniem` | Patronym | Jansz |
 | `prs_tussenvoegsels` | Prefix | van der |
-| `prs_achternaam` | Surname | Jansenf |
+| `prs_achternaam` | Surname | Knijff |
 | `pla_naam_herkomst` | Origin | Delft |
 | `prs_datum_indiensttreding` | Entry date | 1725-04-25 |
 | `rol_naam_functie_NL` | Rank/function | Matroos |
@@ -112,12 +112,12 @@ curl -s "https://service.archief.nl/hub3/api/nt/search?q=SURNAME" \
 Returns counts across 15+ NA name indexes including VOC, KNIL, Landmacht,
 Marine, emigration. Useful for a broad initial sweep.
 
-## Known Jansen/Jansenf in VOC
+## Known Jansen/Knijff in VOC
 
 - **Daniel Jansen** from Woerden (1704, ship Neptunus, soldaat, died Asia 1714)
 - **Pieter de Vries** from Utrecht and Rotterdam (multiple voyages)
 - **Gerrit de Vries** from Utrecht
-- **Aart Jansenf** from Delft (Matroos, 5+ voyages 1715-1732)
+- **Aart Knijff** from Delft (Matroos, 5+ voyages 1715-1732)
 
 ## Limitations
 
