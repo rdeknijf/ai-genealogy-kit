@@ -188,3 +188,15 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 - **Access method:** Stadsarchiefinzicht.nl viewer (browser-based); requires Playwright. Some records also available via www.hoogheemraadschap.nl en Erfgoed Dordrecht portals.
 - **Priority:** HIGH — blocking Maartje Bakker parents lookup (I900527) and multiple Zwijndrecht family lines in RQ-012
 - **Status:** CANDIDATE
+
+## ARCHION — German Protestant church records (Kirchenbücher)
+
+- **URL:** https://www.archion.de
+- **Discovered:** 2026-05-10, F-3797 (RQ-051 session 5)
+- **Why:** Digitized German Kirchenbücher for Protestant (Evangelical-Lutheran) churches across Germany. Specifically: Varrel Kirchenbuch 1730–1796 contains baptism records for the Kemmann family (ancestors I900108 Johann Heinrich Wilhelm Kemmann and I900109 Catharina Maria Magdalena Staats, whose son was born in Varrel, Hannover in 1782). Searching "Kemmann" and "Staats" in the 1730–1796 register would likely identify parents of both direct ancestors.
+- **Record types:** DTB (Doop, Trouw, Begraven), Kirchenbücher
+- **Estimated size:** Millions of German church records
+- **Access method:** Subscription required (~€3.90/month via ARCHION). Browse/search interface at archion.de.
+- **Priority:** MEDIUM (2 gen 9 ancestor slots would be filled for Kemmann branch: ahn=456,457,458,459)
+- **Status:** CANDIDATE
+- **Human action needed:** Subscribe to ARCHION and search Kirchenkreis Grafschaft Diepholz → Varrel → Kirchenbuch 1730–1796 for "Kemmann" and "Staats". Also check 1756 Einwohnerverzeichnis for Kemmann household.
