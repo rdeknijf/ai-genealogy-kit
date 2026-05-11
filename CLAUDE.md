@@ -337,8 +337,10 @@ generations 3-9+ with 100% filled and verified.
 - `.claude/skills/` — one skill per data source + workflow skills
 - `tests/` — pytest suite (uses in-memory SQLite with `schema.sql`)
 
-All binary files in `private/` are tracked by Git LFS. Before committing
-any new binary (image, PDF, scan), verify LFS tracking with `git lfs track`.
+Large binary files (`.wmv`) are gitignored. Smaller binaries (images, PDFs,
+`.wav`, `.ogg`) are committed directly — they're under GitHub's 100 MB limit.
+Git LFS attributes exist in `.gitattributes` but `git-lfs` is not currently
+installed on buckland.
 
 ## Memory (QMD)
 
