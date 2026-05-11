@@ -196,7 +196,7 @@ The HTML contains Schema.org `itemscope`/`itemprop` annotations for:
 Run multiple JSON searches in parallel for all surname variants:
 
 ```
-jansen, janssen, janszen, janzen, de knijf, de knijff, van der knijf
+jansen, janssen, janszen, janzen, de jansen, janssen, van jansen
 ```
 
 The JSON API is stateless and parallelizable — all variants can be
