@@ -171,7 +171,7 @@ Legend:
 - **Cost:** Free
 - **Login:** No
 - **Skill:** `.claude/skills/erfgoed-delft/SKILL.md` — Clean URL search with session cookie (DeventIT Atlantis Web platform)
-- **Relevance:** HIGH. Contains Jacob de Vries x Teunisje Brouwer marriage record (28 Sep 1923) and many other Jansen/de Vries records in the Delft area.
+- **Relevance:** HIGH. Contains Jacob de Vries x a spouse marriage record (28 Sep 1923) and many other Jansen/de Vries records in the Delft area.
 
 ### Drents Archief (Drenthe Provincial Archive)
 
@@ -262,7 +262,7 @@ Legend:
 - **Cost:** Free
 - **Login:** No
 - **Skill:** `.claude/skills/voc-opvarenden/SKILL.md` — NA HUB3 JSON API
-- **Relevance:** HIGH. Multiple Jansen/Jansenf sailed as VOC soldiers/sailors. Daniel Pieterse Jansen from Woerden (1704). Note: `vocsite.nl` is ships only, `vocopvarenden.nationaalarchief.nl` is defunct.
+- **Relevance:** HIGH. Multiple Jansen/Jansen sailed as VOC soldiers/sailors. Daniel Pieterse Jansen from Woerden (1704). Note: `vocsite.nl` is ships only, `vocopvarenden.nationaalarchief.nl` is defunct.
 
 ### SSNE — Scotland's Soldiers and the Dutch Republic
 
@@ -834,15 +834,15 @@ Most regional archives have their own image banks:
 Store private archives, personal collections, or research material from
 other genealogists in the `sources/` directory (gitignored).
 
-### hansknijff.com (Hans Jansenf's Genealogy)
+### hansknijff.com (Hans Jansen's Genealogy)
 
 - **URL:** <https://www.hansknijff.com/>
-- **Contains:** Comprehensive Jansenf family research covering Woerden, Linschoten, Harmelen, Delft, Utrecht, and Alphen branches. Includes: parenteel (descendancy) from Aert Jansenf (~1545), kwartierstaat (pedigree charts), stamreeks (patrilineal lines), 143+ digitized primary source documents (notarial acts, baptisms, marriages, deaths, VOC records), name variant analysis, the Booth Collection (Utrecht Jansenf records back to 1108), and related family trees (Achterberg, Bos, van der Vloedt).
+- **Contains:** Comprehensive Jansen family research covering Woerden, Linschoten, Harmelen, Delft, Utrecht, and Alphen branches. Includes: parenteel (descendancy) from Aert Jansen (~1545), kwartierstaat (pedigree charts), stamreeks (patrilineal lines), 143+ digitized primary source documents (notarial acts, baptisms, marriages, deaths, VOC records), name variant analysis, the Booth Collection (Utrecht Jansen records back to 1108), and related family trees (Achterberg, Bos, van der Vloedt).
 - **Cost:** Free
 - **Login:** No
 - **Contact:** hamalejo@gmail.com
 - **Last updated:** Jan 2026 (actively maintained)
-- **Relevance:** HIGH for Jansenf/de Vries/van der Jansenf research. Documents name variant history and provides primary source scans. A GEDCOM download is available on the site.
+- **Relevance:** HIGH for Jansen/de Vries/van der Jansen research. Documents name variant history and provides primary source scans. A GEDCOM download is available on the site.
 - **Technical note:** Site uses HTML framesets — fetch inner frame URLs (without "frameset" in name) to get actual content. See `.claude/skills/hansknijff-com.md` for URL patterns.
 
 ---

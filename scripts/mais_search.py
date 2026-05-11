@@ -13,7 +13,7 @@ Supported archives:
 
 Usage:
     python scripts/mais_search.py hua "Jansen"
-    python scripts/mais_search.py hua "Jansen" --firstname Jan --place Woerden
+    python scripts/mais_search.py hua "Jansen" --firstname Jan --place Utrecht
     python scripts/mais_search.py ecal "Peters" --year-from 1800 --year-to 1850
     python scripts/mais_search.py dordrecht "van Leeuwen" --limit 10
     python scripts/mais_search.py --list-archives
@@ -34,7 +34,7 @@ ARCHIVES = {
         "base_url": "https://hetutrechtsarchief.nl/onderzoek/resultaten/personen-mais",
         "mivast": 39,
         "miadt": 39,
-        "coverage": "Utrecht province: Woerden, Utrecht, Amersfoort, Zeist — 13.9M records",
+        "coverage": "Utrecht province: Utrecht, Utrecht, Amersfoort, Zeist — 13.9M records",
         "ssl_verify": True,
     },
     "ecal": {

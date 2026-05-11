@@ -120,7 +120,7 @@ Project-local skills exist for each source — see `.claude/skills/`.
 - Use web search to find indexed records, then verify with primary sources.
 - Cross-reference multiple independent sources before flagging changes.
 - Track all findings in the database with tier and status.
-- Check `private/research/HUMAN_ACTIONS.md` for things only Rutger can do (archive visits, subscriptions, family questions) — never duplicate these as AI tasks.
+- Check `private/research/HUMAN_ACTIONS.md` for things only the researcher can do (archive visits, subscriptions, family questions) — never duplicate these as AI tasks.
 - Check `research/DATASOURCE_CANDIDATES.md` for datasources flagged by research agents
   that don't have skills yet. When onboarding new skills, start here.
 
@@ -296,18 +296,27 @@ The public repo (`ai-genealogy-kit`) must NEVER contain:
 - Research queue items referencing specific people
 - Content from `private/research/` files
 - Family photos, scans, or documents
+- One-shot GEDCOM edit scripts (apply_*.py, fix_*.py) — these contain
+  family-specific data and are gitignored. Create them in `private/`
+  or keep them local-only.
 
 When editing files in the public repo, review every line for accidental
-private content before committing. All binary files (images, PDFs, scans)
-must go through Git LFS in the private repo — never commit binaries directly.
+private content before committing. Use generic Dutch names (Jansen, de Vries,
+Bakker) in usage examples and docstrings — never real family names.
+
+Pre-commit check: `git grep -l "YOUR_FAMILY_NAMES_HERE" -- ":!CLAUDE*" ":!.claude/"`
+
+All binary files (images, PDFs, scans) must go through Git LFS in the
+private repo — never commit binaries directly.
 
 ## Primary Goal — Kids' Pedigree
 
 The default research objective is always: **fill and harden the direct
-ancestor pedigree of the kids** (Freya I501635, Balder I501886). Target
-generations 3-9+ with 100% filled and verified.
+ancestor pedigree** of the configured root individuals. Target
+generations 3-9+ with 100% filled and verified. Root individuals are
+configured in CLAUDE.local.md.
 
-- Coverage is measured from the kids: `coverage-score --root I501635 --generations 9`
+- Coverage is measured from the root: `coverage-score --root ROOT_ID --generations 9`
 - When no specific task is given, the fallback is: find the generation with
   the most gaps in the kids' pedigree and work on filling/verifying them
 - Direct ancestors' immediate families (siblings, spouses) are in scope when
@@ -344,7 +353,7 @@ installed on buckland.
 
 ## Memory (QMD)
 
-Rutger has a persistent knowledge base searched by QMD (BM25, instant).
+The researcher has a persistent knowledge base searched by QMD (BM25, instant).
 The genealogy project has extensive context in `~/ai/memory/projects.md`
 (~200 lines of genealogy data) and `~/ai/memory/people.md` (family members).
 

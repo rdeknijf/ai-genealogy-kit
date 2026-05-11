@@ -47,3 +47,7 @@ __pycache__/
 *.pyc
 .venv/
 .playwright-cli/
+
+# Safety snapshot scripts (contain family-specific GEDCOM data)
+scripts/apply_*.py
+scripts/fix_*.py

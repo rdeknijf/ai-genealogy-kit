@@ -51,7 +51,7 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 
 - **URL:** https://zoeken.stadsarchiefdelft.nl
 - **Discovered:** 2026-04-03, F-1176 (RQ-017 session 1)
-- **Why:** Holds Teunisje Brouwer × Jacob de Vries marriage record with scan (28 Sep 1923).
+- **Why:** Holds a spouse × Jacob de Vries marriage record with scan (28 Sep 1923).
 - **Record types:** BS, DTB, bevolkingsregister, notarial records
 - **Estimated size:** 185+ Jansen records; covers Delft, Maasland, Schipluiden, Pijnacker, Rijswijk
 - **Access method:** Clean URL search with session cookie (DeventIT Atlantis Web platform)
@@ -73,7 +73,7 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 
 - **URL:** https://www.geldersarchief.nl/bronnen/archieven?mivast=37&mizig=0&miadt=37&miaet=54&micode=0176_454.01&minr=<MINR>&miview=ldt
 - **Discovered:** 2026-04-10, F-1344/F-1345 (RQ-014 session 2)
-- **Why:** Critical for Bakker/Bakker research. The Didam NDG baptism register (GA 0176/454.01) and Drempt NDG baptism register (GA 0176/986.1) are accessible as images via the GA viewer, but only a fraction is indexed in OpenArchieven. The 1665-1695 pages of Didam 454.01 would show children of Jan Gerritsen × Guetjen Janssen — one of whom may be Geurt Bakker. The GA viewer works with curl (full HTML, 200) but the image itself requires JavaScript rendering. Headless playwright gets blocked ("Here be dragons" anti-bot). Requires: a non-headless browser session, or user manually browsing with `minr` values derived from OA records.
+- **Why:** Critical for Bakker/Bakker research. The Didam NDG baptism register (GA 0176/454.01) and Drempt NDG baptism register (GA 0176/986.1) are accessible as images via the GA viewer, but only a fraction is indexed in OpenArchieven. The 1665-1695 pages of Didam 454.01 would show children of Jan Gerritsen × Guetjen Janssen — one of whom may be an ancestor. The GA viewer works with curl (full HTML, 200) but the image itself requires JavaScript rendering. Headless playwright gets blocked ("Here be dragons" anti-bot). Requires: a non-headless browser session, or user manually browsing with `minr` values derived from OA records.
 - **Record types:** DTB Dopen (baptism), DTB Begraven (burial), DTB Trouwen (marriage) — image scans
 - **Estimated size:** GA holds all Gelderland DTB records pre-1811; many unindexed pages
 - **Access method:** Playwright with headed browser (non-headless) OR user manual access via the GA website
@@ -84,11 +84,11 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 
 - **URL:** https://permalink.geldersarchief.nl/ (per-record permalinks) and GA viewer `mivast=37&micode=0176_1605`
 - **Discovered:** 2026-04-10, F-1354/F-1357 (RQ-014 session 4)
-- **Why:** Gerrit Bakker (active 1660-1672 Brummen/Vorden) had confirmed sons Juriaen Gerritsen (married 1672) and Derck Gerritzen op Kleyn Bakker (married 1707). The pre-1674 pages of Vorden NDG baptism register (GA 0176/1605) likely contain the baptism of Geurt Bakker (~1655-1670) and may name his mother. Currently only post-1674 baptisms appear indexed in OA (first indexed baptism: Willem Bakker 1674). Pages from 1640-1673 are presumably on earlier folios of the same register — accessible via GA viewer but not via OA/WieWasWie API.
+- **Why:** an ancestor (active 1660-1672 Brummen/Vorden) had confirmed sons Juriaen Gerritsen (married 1672) and Derck Gerritzen op Kleyn Bakker (married 1707). The pre-1674 pages of Vorden NDG baptism register (GA 0176/1605) likely contain the baptism of an ancestor (~1655-1670) and may name his mother. Currently only post-1674 baptisms appear indexed in OA (first indexed baptism: Willem Bakker 1674). Pages from 1640-1673 are presumably on earlier folios of the same register — accessible via GA viewer but not via OA/WieWasWie API.
 - **Record types:** DTB Dopen (baptism) — unindexed image scans only
 - **Estimated size:** ~35-40 years of pre-1674 baptism pages in registry 1605
 - **Access method:** GA web viewer with JavaScript (Playwright headed browser), or physical visit to Doetinchem
-- **Priority:** HIGH — probably contains Geurt Bakker's baptism
+- **Priority:** HIGH — probably contains an ancestor's baptism
 - **Status:** CANDIDATE — blocked by anti-bot on headless playwright
 
 ## Doesburg NDG doopregister gap 1676-1705 — GA archief 0176
@@ -106,10 +106,10 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
   - **0176_491**: NDG Begraven, 1804+ (minr ~24876400+)
   - **0176_493.1**: Rooms Katholiek (Catholic) Dopen+Huwelijken, 1683+ (minr ~24879000+)
   - **0176_494**: RC Dopen, 1802+ (minr ~24885000+)
-  Any Doesburg NDG child baptized between ~1676 and early 1705 is NOT findable in digitized records. The hypothetical Gerrit Bakker (~1695–1705) falls squarely in this gap. WW has 0 Bakker/Bakker NDG entries before 1706. The physical register covering 1676-1705 may be lost, or was never created (plague years, no pastor), or exists undigitized at GA Arnhem.
+  Any Doesburg NDG child baptized between ~1676 and early 1705 is NOT findable in digitized records. The hypothetical an ancestor (~1695–1705) falls squarely in this gap. WW has 0 Bakker/Bakker NDG entries before 1706. The physical register covering 1676-1705 may be lost, or was never created (plague years, no pastor), or exists undigitized at GA Arnhem.
 - **Record types:** DTB Dopen, DTB Trouwen, DTB Begraven — GA MAIS scan viewer
 - **Access method:** GA MAIS viewer — use `mizig=236&miadt=37&miaet=54&micode=0176_[code]&minr=[minr]&miview=ldt`. Playwright MCP works (MCP uses headed browser profile); headless playwright-cli is blocked by anti-bot.
-- **Priority:** HIGH — affects Geurt Bakker (I0018 ancestor line)
+- **Priority:** HIGH — affects an ancestor (I0018 ancestor line)
 - **Status:** RESEARCH NOTE — gap documented, physical GA visit or contact needed to check undigitized holdings
 
 ## Bossche Protocollen 1406-1500 — Den Bosch
@@ -127,11 +127,11 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 
 - **URL:** https://www.genealogiedomein.nl/digitaal-mainmenu-27/doesburg-digitale-genealogische-brongegevens/richterambt-doesburg-afbeeldingen-ora/richterambt-doesburg-afb-ora-inv-nrs-098-113
 - **Discovered:** 2026-04-11, F-1371 (RQ-014 session 5)
-- **Why:** The ORA Richterambt Doesburg inv.nrs. 098-113 covers "Protocol van opdrachten, vestenissen en andere voluntaire akten" 1600-1805. This is the only known remaining avenue for finding documentary evidence linking Gerrit Bakker (I800011) to Geurt Bakker as his father. Guardianship appointments (momberschap), inheritance records, and property transfers routinely name parent-child relationships. Geurt Bakker was confirmed active in this richterambt 1707-1722. Scans are on Genealogiedomein Flickr albums but are NOT transcribed or indexed — reading requires vision AI on each scan page.
+- **Why:** The ORA Richterambt Doesburg inv.nrs. 098-113 covers "Protocol van opdrachten, vestenissen en andere voluntaire akten" 1600-1805. This is the only known remaining avenue for finding documentary evidence linking an ancestor (I800011) to an ancestor as his father. Guardianship appointments (momberschap), inheritance records, and property transfers routinely name parent-child relationships. an ancestor was confirmed active in this richterambt 1707-1722. Scans are on Genealogiedomein Flickr albums but are NOT transcribed or indexed — reading requires vision AI on each scan page.
 - **Record types:** Voluntaire akten (property transfers, guardianship, wills) — ORA Richterambt Doesburg
 - **Estimated size:** 15+ inventory numbers × multiple years = potentially 1000+ pages of scans
 - **Access method:** Genealogiedomein Flickr albums (genealogiedomein skill). Browse verwijsfiche per inv.nr, extract photo IDs, resolve + read with vision.
-- **Priority:** HIGH — this is the primary remaining digital avenue for the Gerrit Bakker brick wall
+- **Priority:** HIGH — this is the primary remaining digital avenue for the an ancestor brick wall
 - **Status:** CANDIDATE — no index exists; requires systematic vision scan reading
 
 ## Doesburg Stad ORA — Boedels 1501-1810 (probate estates)
@@ -149,7 +149,7 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 
 - **URL:** https://ecal.nl/collecties/
 - **Discovered:** 2026-04-14, F-1538 (RQ-014 session 21)
-- **Why:** OpenArchieven returned a hit: ECAL toegang 3021, inv.41 — "Advocaat-fiscaal tegen Gerrit Bakker, 1746, Doetinchem". This is a civil/fiscal prosecution of a Gerrit Bakker in the Doetinchem area in 1746. This person may be a son of Geurt Bakker born during the Doesburg NDG register gap (~1695-1705), and thus a sibling or cousin of I800011. ECAL covers Achterhoek archives not indexed in OpenArchieven.
+- **Why:** OpenArchieven returned a hit: ECAL toegang 3021, inv.41 — "Advocaat-fiscaal tegen an ancestor, 1746, Doetinchem". This is a civil/fiscal prosecution of a an ancestor in the Doetinchem area in 1746. This person may be a son of an ancestor born during the Doesburg NDG register gap (~1695-1705), and thus a sibling or cousin of I800011. ECAL covers Achterhoek archives not indexed in OpenArchieven.
 - **Record types:** ORA civil cases, DTB, notarial records, bevolkingsregister for Achterhoek region (Doetinchem, Zelhem, Aalten, Winterswijk area)
 - **Estimated size:** Large regional archive
 - **Access method:** MAIS-based catalog + online scans; some indexed in OpenArchieven; some accessible via ECAL own viewer
@@ -160,11 +160,11 @@ When a skill is created, change status to `ONBOARDED` and note the skill path.
 
 - **URL:** https://rhcvechtenvenen.nl/collecties/
 - **Discovered:** 2026-04-17, F-1577 (RQ-017 session)
-- **Why:** Bevolkingsregister scans for De Bilt are in this archive (archive code `vev` in OpenArchieven). Teunis Brouwer (I0065, tuinman, De Bilt) is in their 1900–1911 bevolkingsregister (vev:60E65318). OpenArchieven indexes these records but MAIS scan access is blocked via API. A Playwright-based skill would allow viewing the actual register pages to confirm beroep (occupation) fields. Also relevant for later de Vries family research since Jan de Vries (I0069) was born in Woerden 1818 and Jan de Vries (I0071) died in Linschoten 1849.
+- **Why:** Bevolkingsregister scans for De Bilt are in this archive (archive code `vev` in OpenArchieven). Teunis Smit (I0065, tuinman, De Bilt) is in their 1900–1911 bevolkingsregister (vev:60E65318). OpenArchieven indexes these records but MAIS scan access is blocked via API. A Playwright-based skill would allow viewing the actual register pages to confirm beroep (occupation) fields. Also relevant for later de Vries family research since Jan de Vries (I0069) was born in Woerden 1818 and Jan de Vries (I0071) died in Linschoten 1849.
 - **Record types:** Bevolkingsregister, DTB, BS Geboorte/Huwelijk/Overlijden, notarial records for De Bilt, Maarssen, Woerden, Linschoten, Vinkeveen
 - **Estimated size:** Large regional archive covering Utrecht province west
 - **Access method:** MAIS-based (same platform as many Dutch archives); partial indexing in OpenArchieven but scans need browser access
-- **Priority:** MEDIUM — needed to confirm Teunis Brouwer's tuinman occupation from bevolkingsregister scan (would upgrade F-1177 from Tier C to Tier B)
+- **Priority:** MEDIUM — needed to confirm Teunis Smit's tuinman occupation from bevolkingsregister scan (would upgrade F-1177 from Tier C to Tier B)
 - **Status:** CANDIDATE
 
 ## AlleGroningers — Groninger Archieven indexed DTB + BS

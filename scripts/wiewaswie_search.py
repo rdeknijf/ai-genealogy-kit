@@ -6,7 +6,7 @@ JSON API. Falls back to OpenArchieven API if Cloudflare blocks the request.
 
 Usage:
     python scripts/wiewaswie_search.py "Jansen"
-    python scripts/wiewaswie_search.py "Jansen" --firstname Jan --place Woerden
+    python scripts/wiewaswie_search.py "Jansen" --firstname Jan --place Utrecht
     python scripts/wiewaswie_search.py "Jansen" --prefix de --type "BS Geboorte"
     python scripts/wiewaswie_search.py "Jansen" --year-from 1800 --year-to 1850
     python scripts/wiewaswie_search.py --detail 55972978
