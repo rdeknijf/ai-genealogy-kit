@@ -19,7 +19,7 @@ TIER_COLORS = {
     "D": "#ef4444",  # red — single source / AI inference
 }
 UNRESEARCHED_COLOR = "#d1d5db"  # light gray — no findings entry
-EMPTY_COLOR = "#f3f4f6"        # very light gray — unknown ancestor
+EMPTY_COLOR = "#ffffff"        # white — unknown ancestor
 ROOT_COLOR = "#8b5cf6"         # purple for root person
 
 TIER_LABELS = {
@@ -79,8 +79,8 @@ def make_fan_chart_svg(
     num_generations: int,
 ) -> str:
     """Generate an SVG fan chart."""
-    # SVG dimensions
-    size = 1200
+    # SVG dimensions — scale with generations for readability on large screens
+    size = max(1200, 400 * num_generations)
     cx, cy = size / 2, size / 2  # center
     max_radius = size / 2 - 80   # leave margin for legend
 
@@ -94,7 +94,7 @@ def make_fan_chart_svg(
         total_weight += weight
 
     ring_radii = []  # (inner_r, outer_r) for each generation
-    r = 45  # start radius (center circle for root)
+    r = max(45, size // 30)  # start radius (center circle for root)
     ring_radii.append((0, r))  # gen 0 = center circle
     available = max_radius - r
     for g in range(1, num_generations):
@@ -117,10 +117,13 @@ def make_fan_chart_svg(
     root_name = _short_name(root_person.get("name", "?"))
     root_years = _year_range(root_person)
 
-    parts.append(f'<circle cx="{cx}" cy="{cy}" r="44" fill="{ROOT_COLOR}" stroke="#6d28d9" stroke-width="2"/>')
-    parts.append(f'<text x="{cx}" y="{cy - 8}" text-anchor="middle" font-size="11" fill="white" font-weight="bold">'
+    root_r = ring_radii[0][1] - 1
+    root_font = max(11, size // 120)
+    root_font_sm = max(9, size // 150)
+    parts.append(f'<circle cx="{cx}" cy="{cy}" r="{root_r}" fill="{ROOT_COLOR}" stroke="#6d28d9" stroke-width="2"/>')
+    parts.append(f'<text x="{cx}" y="{cy - root_font * 0.7}" text-anchor="middle" font-size="{root_font}" fill="white" font-weight="bold">'
                  f'{_escape(root_name)}</text>')
-    parts.append(f'<text x="{cx}" y="{cy + 8}" text-anchor="middle" font-size="9" fill="white">'
+    parts.append(f'<text x="{cx}" y="{cy + root_font_sm * 0.7}" text-anchor="middle" font-size="{root_font_sm}" fill="white">'
                  f'{_escape(root_years)}</text>')
 
     # Draw each generation ring
@@ -218,11 +221,6 @@ def make_fan_chart_svg(
 
 def _arc_segment(cx, cy, inner_r, outer_r, start_deg, end_deg, fill, stroke) -> str:
     """Generate SVG path for an arc segment (annular sector)."""
-    # Small gap between segments
-    gap = 0.3
-    start_deg += gap
-    end_deg -= gap
-
     sr = math.radians(start_deg)
     er = math.radians(end_deg)
 
@@ -246,7 +244,7 @@ def _arc_segment(cx, cy, inner_r, outer_r, start_deg, end_deg, fill, stroke) -> 
          f"L {ix2:.2f} {iy2:.2f} "
          f"A {inner_r:.2f} {inner_r:.2f} 0 {large_arc} 0 {ix1:.2f} {iy1:.2f} Z")
 
-    return f'<path d="{d}" fill="{fill}" stroke="{stroke}" stroke-width="0.5"/>'
+    return f'<path d="{d}" fill="{fill}" stroke="{fill}" stroke-width="0.5"/>'
 
 
 def _curved_text(cx, cy, r, angle_deg, name, years, font_size) -> str:

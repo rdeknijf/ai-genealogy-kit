@@ -134,15 +134,16 @@ After the runner stops:
    python3 scripts/analyze_gedcom.py private/tree.ged | head -10
    ```
 
-2. **Generate fan chart:**
+2. **Generate fan chart** (Balder-rooted, committed to private repo):
    ```bash
-   python3 scripts/fan_chart.py 7
+   GEDCOM_ROOT_ID=I501886 python3 scripts/fan_chart.py 11 -o private/charts/fan_chart_balder.svg
    ```
 
 3. **Prep commit** (show to user, don't commit without approval):
    ```
    feat(research): autonomous research — N sessions, +X people, +Y families
    ```
+   Include the updated fan chart in the commit.
 
 4. **Notify the user** via `/ping` if they asked for it.
 
